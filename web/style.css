@@ -1,0 +1,85 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    height: 100%;
+    background: #1c1d27;
+}
+
+a {
+    color: #405aff;
+    text-decoration: none;
+    font: normal normal 12px/14px "Work Sans", sans-serif;
+}
+
+.clearfix:after {
+    height: 0;
+    clear: both;
+    content: ".";
+    display: block;
+    visibility: hidden;
+}
+
+.left {
+    float: left;
+}
+
+.center {
+    margin: 0 auto;
+}
+
+.right {
+    float: right;
+}
+
+#main_container {
+    height: 100%;
+    display: flex;
+    overflow: hidden;
+    flex-direction: column;
+}
+
+.control_bar {
+    padding: 10px;
+    background: #272936;
+}
+
+.control_bar a {
+    padding: 6px 8px;
+}
+
+.ghost_button {
+    border: 0;
+    border-radius: 4px;
+    color: #aeb0be;
+    background: transparent;
+    padding: 0;
+    margin: 0 2px;
+    padding: 6px 12px;
+    font: normal normal 12px/14px "Work Sans", sans-serif;
+}
+
+.ghost_button:hover {
+    background: #343545;
+}
+
+.fill_button {
+    border: 0;
+    border-radius: 4px;
+    color: #f6f7ff;
+    background: #405aff;
+    padding: 0;
+    margin: 0 2px;
+    padding: 6px 12px;
+    font: normal normal 12px/14px "Work Sans", sans-serif;
+}
+
+#schedule_box {
+    flex-grow: 1;
+    overflow: auto;
+}
+
+#timeline {
+    min-width: fit-content;
+    padding: 30px 20px;
+}
