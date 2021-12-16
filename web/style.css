@@ -83,3 +83,144 @@ a {
     min-width: fit-content;
     padding: 30px 20px;
 }
+
+#timestamps {
+    display: table;
+    margin: 0 auto;
+    white-space: nowrap;
+    padding-left: 130px;
+}
+
+#timestamps span {
+    width: 40px;
+    color: #717383;
+    display: inline-block;
+    text-align: center;
+    font: normal normal 12px/18px "Work Sans", sans-serif;
+}
+
+#timestamps span.fullhour {
+    color: #aeb0be;
+}
+
+#timeline_canvas {
+    display: table;
+    margin: 0 auto;
+    padding: 0 20px;
+    position: relative;
+}
+
+#timeline_canvas .head_row {
+    height: 14px;
+    white-space: nowrap;
+}
+
+#timeline_canvas .row {
+    height: 60px;
+    white-space: nowrap;
+}
+
+#timeline_canvas .head_trainer {
+    width: 129px;
+    height: 13px;
+    vertical-align: top;
+    display: inline flow-root;
+    border-right: 1px solid #333445;
+    border-bottom: 1px solid #333445;
+}
+
+#timeline_canvas .head_cell {
+    width: 39px;
+    height: 13px;
+    vertical-align: top;
+    display: inline flow-root;
+    border-right: 1px solid #333445;
+    border-bottom: 1px solid #333445;
+}
+
+#timeline_canvas .trainer_name {
+    width: 113px;
+    color: #aeb0be;
+    text-align: left;
+    vertical-align: top;
+    padding: 22px 0 22px 16px;
+    display: inline flow-root;
+    border-right: 1px solid #333445;
+    border-bottom: 1px solid #333445;
+    font: normal normal 13px/15px "Work Sans", sans-serif;
+}
+
+#timeline_canvas .cell {
+    width: 39px;
+    height: 59px;
+    vertical-align: top;
+    display: inline flow-root;
+    border-right: 1px solid #333445;
+    border-bottom: 1px solid #333445;
+}
+
+.time_helper {
+    height: 53px;
+    display: none;
+    border: 1px solid rgba(64, 90, 255, 0.7);
+    position: absolute;
+    border-radius: 6px;
+    background: rgba(64, 90, 255, 0.3);
+}
+
+.timeslot {
+    width: 80px;
+    height: 49px;
+    color: #1c1d27;
+    background: #272936;
+    border: 1px solid #717383;
+    border-radius: 4px;
+    position: absolute;
+    touch-action: none;
+    top: 17px;
+    left: 101px;
+}
+
+.timeslot.collision {
+    border-color: red;
+}
+
+.timeslot:hover {
+    cursor: move;
+}
+
+.timeslot .fixed {
+    color: #717383;
+    text-align: center;
+    padding: 17px 0 18px 0;
+    font: normal normal 11px/13px "Work Sans", sans-serif;
+}
+
+.timeslot .name {
+    color: #aeb0be;
+    text-align: center;
+    padding: 2px 0 0 0;
+    font: normal normal 11px/13px "Work Sans", sans-serif;
+}
+
+.timeslot .soloname {
+    color: #aeb0be;
+    text-align: center;
+    padding: 9px 0 8px 0;
+    font: normal normal 11px/13px "Work Sans", sans-serif;
+}
+
+.timeslot .label {
+    color: #717383;
+    text-align: center;
+    padding: 0 0 2px 0;
+    font: normal normal 11px/13px "Work Sans", sans-serif;
+}
+
+.timeslot .equipment {
+    text-align: center;
+    border-radius: 0 0 2px 2px;
+    margin: 0 1px 1px 1px;
+    font: normal normal 11px/13px "Work Sans", sans-serif;
+    padding: 2px 0 3px 0;
+}
