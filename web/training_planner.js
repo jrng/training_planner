@@ -889,7 +889,21 @@ class Parser
         file_picker.click();
     };
 
+    var save_file_content = function (filename, mimetype, content) {
+        let blob = new Blob([ content ], { type: mimetype });
+
+        let a = document.createElement("a");
+        a.download = filename;
+        a.href = URL.createObjectURL(blob);
+        a.click();
+        URL.revokeObjectURL(a.href);
+    };
+
     var save_file = function () {
+        if (schedule !== null)
+        {
+            save_file_content("plan.txt", "plain/txt", schedule.to_string(true));
+        }
     };
 
     var export_pdf = function () {

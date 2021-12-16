@@ -222,5 +222,8 @@ a {
     border-radius: 0 0 2px 2px;
     margin: 0 1px 1px 1px;
     font: normal normal 11px/13px "Work Sans", sans-serif;
-    padding: 2px 0 3px 0;
+    padding: 2px 4px 3px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
