@@ -492,6 +492,13 @@ class Parser
     var schedule = null;
     var instances = [];
 
+    var main_worker_thread = null;
+
+    var changeText = function (elem, text) {
+        while (elem.hasChildNodes()) elem.removeChild(elem.firstChild);
+        elem.appendChild(document.createTextNode(text));
+    };
+
     var hide_time_helper = function () {
         time_helper.removeAttribute("style");
     };
@@ -637,6 +644,12 @@ class Parser
 
             document.body.style.cursor = "move";
         }
+    };
+
+    var build_solving_status = function () {
+        let timeline = document.getElementById("timeline");
+
+        while (timeline.hasChildNodes()) timeline.removeChild(timeline.firstChild);
     };
 
     var build_schedule_timeline = function () {
@@ -909,7 +922,83 @@ class Parser
     var export_pdf = function () {
     };
 
+    var cancel_solving = function () {
+        main_worker_thread.postMessage({ cmd: "cancel_solving" });
+
+        let start_solving_button = document.getElementById("start_solving");
+
+        start_solving_button.removeEventListener("click", cancel_solving);
+        start_solving_button.addEventListener("click", start_solving);
+
+        changeText(start_solving_button, "Solve");
+
+        build_schedule_timeline();
+    };
+
     var start_solving = function () {
+        if (schedule)
+        {
+            let start_solving_button = document.getElementById("start_solving");
+
+            start_solving_button.removeEventListener("click", start_solving);
+            start_solving_button.addEventListener("click", cancel_solving);
+
+            changeText(start_solving_button, "Abort");
+
+            build_solving_status();
+            main_worker_thread.postMessage({ cmd: "start_solving", schedule: schedule });
+        }
+    };
+
+    var handle_main_worker_thread_message = function (message) {
+        switch (message.data.cmd)
+        {
+            case "found_solution":
+            {
+                let solution_instances = message.data.instances;
+
+                if (instances.length === solution_instances.length)
+                {
+                    for (let i = 0; i < solution_instances.length; i += 1)
+                    {
+                        for (let j = 0; j < instances.length; j += 1)
+                        {
+                            if (solution_instances[i].slot_id === instances[j].slot_id)
+                            {
+                                instances[j].gymnastic_equipment_index = solution_instances[i].gymnastic_equipment_index;
+                                instances[j].start_time = solution_instances[i].start_time;
+                                instances[j].end_time = solution_instances[i].end_time;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                let start_solving_button = document.getElementById("start_solving");
+
+                start_solving_button.removeEventListener("click", cancel_solving);
+                start_solving_button.addEventListener("click", start_solving);
+
+                changeText(start_solving_button, "Solve");
+
+                build_schedule_timeline();
+                on_instances_changed();
+            } break;
+
+            case "no_solution":
+            {
+                let start_solving_button = document.getElementById("start_solving");
+
+                start_solving_button.removeEventListener("click", cancel_solving);
+                start_solving_button.addEventListener("click", start_solving);
+
+                changeText(start_solving_button, "Solve");
+
+                build_schedule_timeline();
+
+                // TODO: show message, that there is no solution
+            } break;
+        }
     };
 
     var init = function () {
@@ -921,6 +1010,9 @@ class Parser
         document.getElementById("save_file").addEventListener("click", save_file);
         document.getElementById("export_pdf").addEventListener("click", export_pdf);
         document.getElementById("start_solving").addEventListener("click", start_solving);
+
+        main_worker_thread = new Worker("main_worker_thread.js");
+        main_worker_thread.addEventListener("message", handle_main_worker_thread_message);
     };
 
     document.addEventListener("DOMContentLoaded", init);
