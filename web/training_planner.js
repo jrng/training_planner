@@ -489,6 +489,8 @@ class Parser
     var canvas = null;
     var time_helper = null;
 
+    var number_of_placements = null;
+
     var schedule = null;
     var instances = [];
 
@@ -650,6 +652,39 @@ class Parser
         let timeline = document.getElementById("timeline");
 
         while (timeline.hasChildNodes()) timeline.removeChild(timeline.firstChild);
+
+        let container = document.createElement("div");
+        container.classList.add("solving_status");
+
+        let heading = document.createElement("h1");
+        heading.appendChild(document.createTextNode("Solving status"));
+
+        container.appendChild(heading);
+
+        let backtracking = document.createElement("h2");
+        backtracking.appendChild(document.createTextNode("Backtracking"));
+
+        container.appendChild(backtracking);
+
+        let backtracking_state = document.createElement("p");
+
+        number_of_placements = document.createElement("span");
+        number_of_placements.appendChild(document.createTextNode("0"));
+
+        backtracking_state.appendChild(number_of_placements);
+        backtracking_state.appendChild(document.createTextNode(" / " + schedule.time_slots.length + " time slots were successfully placed."));
+
+        container.appendChild(backtracking_state);
+
+        let abort_button = document.createElement("button");
+        abort_button.appendChild(document.createTextNode("Abort"));
+        abort_button.classList.add("fill_button");
+
+        abort_button.addEventListener("click", cancel_solving);
+
+        container.appendChild(abort_button);
+
+        timeline.appendChild(container);
     };
 
     var build_schedule_timeline = function () {
@@ -888,6 +923,10 @@ class Parser
             schedule = new_schedule;
             instances = run_quick_check(schedule);
 
+            document.getElementById("save_file").removeAttribute("disabled");
+            document.getElementById("export_pdf").removeAttribute("disabled");
+            document.getElementById("start_solving").removeAttribute("disabled");
+
             build_schedule_timeline();
             on_instances_changed();
         }
@@ -997,6 +1036,11 @@ class Parser
                 build_schedule_timeline();
 
                 // TODO: show message, that there is no solution
+            } break;
+
+            case "solve_status":
+            {
+                changeText(number_of_placements, String(message.data.best_slot_count));
             } break;
         }
     };

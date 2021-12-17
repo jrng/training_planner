@@ -84,6 +84,23 @@ a {
     padding: 30px 20px;
 }
 
+.solving_status {
+    width: 350px;
+    margin: 0 auto;
+    color: #aeb0be;
+    font: normal normal 12px/14px "Work Sans", sans-serif;
+}
+
+.solving_status h1 {
+    color: #717383;
+    font: normal normal 16px/20px "Work Sans", sans-serif;
+}
+
+.solving_status h2 {
+    color: #717383;
+    font: normal normal 14px/16px "Work Sans", sans-serif;
+}
+
 #timestamps {
     display: table;
     margin: 0 auto;

@@ -9,6 +9,8 @@ const ITERATIONS_PER_STEP = 50000;
     var schedule = null;
     var backtracking = null;
 
+    var best_slot_index = 0;
+
     var iterate = function () {
         let iteration_count = 0;
 
@@ -19,6 +21,11 @@ const ITERATIONS_PER_STEP = 50000;
             if (backtracking.next_possible_slot())
             {
                 backtracking.slot_index += 1;
+
+                if (backtracking.slot_index > best_slot_index)
+                {
+                    best_slot_index = backtracking.slot_index;
+                }
             }
             else
             {
@@ -44,6 +51,8 @@ const ITERATIONS_PER_STEP = 50000;
         }
         else
         {
+            // TODO: maybe send only if we got an update
+            postMessage({ cmd: "solve_status", best_slot_count: best_slot_index });
             timer = setTimeout(iterate, 0);
         }
     };
@@ -64,6 +73,8 @@ const ITERATIONS_PER_STEP = 50000;
 
             backtracking.slot_instances.push(instance);
         }
+
+        best_slot_index = 0;
 
         timer = setTimeout(iterate, 0);
     };
