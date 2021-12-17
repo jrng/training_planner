@@ -7,6 +7,131 @@ const GYMNASTIC_EQUIPMENT_COLORS = [
     { foreground: "turquoise"     , background: "teal"           },
 ];
 
+class StringBuilder
+{
+    constructor(size)
+    {
+        this.index = 0;
+        this.encoder = new TextEncoder();
+        this.output = new Uint8Array(size);
+    }
+
+    append(str)
+    {
+        this.index += this.encoder.encodeInto(str, this.output.subarray(this.index)).written;
+    }
+
+    append_utf16be(str)
+    {
+        this.output[this.index++] = 254;
+        this.output[this.index++] = 255;
+
+        for (let elem of str)
+        {
+            let codepoint = elem.codePointAt(0);
+
+            if ((codepoint < 0xd800) || ((codepoint >= 0xe000) && (codepoint < 0x1000)))
+            {
+                this.output[this.index + 0] = ((codepoint >> 8) & 0xff);
+                this.output[this.index + 1] = ( codepoint       & 0xff);
+                this.index += 2;
+            }
+            else if ((codepoint >= 0x10000) && (codepoint < 0x110000))
+            {
+                codepoint -= 0x10000;
+                let leading  = 0xd800 | ((codepoint >> 10) & 0x3ff);
+                let trailing = 0xdc00 | ( codepoint        & 0x3ff);
+
+                this.output[this.index + 0] = (u8) ((leading >> 8) & 0xff);
+                this.output[this.index + 1] = (u8) ( leading       & 0xff);
+                this.output[this.index + 2] = (u8) ((trailing >> 8) & 0xff);
+                this.output[this.index + 3] = (u8) ( trailing       & 0xff);
+                this.index += 4;
+            }
+        }
+    }
+
+    append_string_builder(builder)
+    {
+        let i = this.index;
+        let size = builder.index;
+
+        for (let j = 0; j < size; j += 1, i += 1)
+        {
+            this.output[i] = builder.output[j];
+        }
+
+        this.index += size;
+    }
+
+    finalize()
+    {
+        return this.output.slice(0, this.index);
+    }
+};
+
+class PDFExporter
+{
+    static MAX_FILE_SIZE = 4 * 1024 * 1024;
+
+    constructor()
+    {
+        this.root_id = 0;
+        this.info_id = 0;
+        this.next_object_id = 1;
+        this.object_offsets = [];
+        this.string_builder = new StringBuilder(PDFExporter.MAX_FILE_SIZE);
+
+        this.append("%PDF-1.5\n%\xD0\xD4\xC5\xD8\n");
+    }
+
+    append(str)
+    {
+        this.string_builder.append(str);
+    }
+
+    append_utf16be(str)
+    {
+        this.string_builder.append_utf16be(str);
+    }
+
+    append_string_builder(builder)
+    {
+        this.string_builder.append_string_builder(builder);
+    }
+
+    create_object()
+    {
+        let object_id = this.next_object_id;
+        this.next_object_id += 1;
+        this.object_offsets.push(this.string_builder.index);
+
+        return object_id;
+    }
+
+    finalize()
+    {
+        let startxref = this.index;
+
+        this.append("xref\n");
+        this.append("0 " + this.next_object_id + "\n");
+        this.append("0000000000 65535 f\n");
+
+        for (let i = 0; i < this.object_offsets.length; i += 1)
+        {
+            this.append(("000000000" + this.object_offsets[i]).slice(-10) + " 00000 n\n");
+        }
+
+        this.append("trailer\n");
+        this.append("<< /Size " + this.next_object_id + " /Root " + this.root_id + " 0 R /Info " + this.info_id + " 0 R >>\n");
+        this.append("startxref\n");
+        this.append(startxref + "\n");
+        this.append("%%EOF\n");
+
+        return this.string_builder.finalize()
+    }
+};
+
 class Parser
 {
     static TOKEN_UNKNOWN        = Symbol("TOKEN_UNKNOWN");
@@ -854,6 +979,284 @@ class Parser
         update_collisions();
     };
 
+    var cut_rounded_rect = function(builder, x0, y0, x1, y1, radius, page_width, page_height) {
+        let x0r = x0 + radius;
+        let x1r = x1 - radius;
+        let y0r = y0 + radius;
+        let y1r = y1 - radius;
+
+        let c = radius * 0.551915024494;
+
+        let x0c = x0r - c;
+        let x1c = x1r + c;
+        let y0c = y0r - c;
+        let y1c = y1r + c;
+
+        builder.append("0.0 0.0 " + page_width + " " + page_height + " re");
+        builder.append(" " + x0r + " " + y0 + " m " + x1r + " " + y0 + " l " + x1c + " " + y0 + " " + x1 + " " + y0c + " " + x1 + " " + y0r + " c");
+        builder.append(" " + x1 + " " + y1r + " l " + x1 + " " + y1c + " " + x1c + " " + y1 + " " + x1r + " " + y1 + " c");
+        builder.append(" " + x0r + " " + y1 + " l " + x0c + " " + y1 + " " + x0 + " " + y1c + " " + x0 + " " + y1r + " c");
+        builder.append(" " + x0 + " " + y0r + " l " + x0 + " " + y0c + " " + x0c + " " + y0 + " " + x0r + " " + y0 + " c W* n\n");
+    };
+
+    var stroke_rounded_rect = function(builder, x0, y0, x1, y1, stroke_width, radius)
+    {
+        let x0r = x0 + radius;
+        let x1r = x1 - radius;
+        let y0r = y0 + radius;
+        let y1r = y1 - radius;
+
+        let c = radius * 0.551915024494;
+
+        let x0c = x0r - c;
+        let x1c = x1r + c;
+        let y0c = y0r - c;
+        let y1c = y1r + c;
+
+        builder.append(stroke_width + " w 0.4 0.4 0.4 RG");
+        builder.append(" " + x0r + " " + y0 + " m " + x1r + " " + y0 + " l " + x1c + " " + y0 + " " + x1 + " " + y0c + " " + x1 + " " + y0r + " c");
+        builder.append(" " + x1 + " " + y1r + " l " + x1 + " " + y1c + " " + x1c + " " + y1 + " " + x1r + " " + y1 + " c");
+        builder.append(" " + x0r + " " + y1 + " l " + x0c + " " + y1 + " " + x0 + " " + y1c + " " + x0 + " " + y1r + " c");
+        builder.append(" " + x0 + " " + y0r + " l " + x0 + " " + y0c + " " + x0c + " " + y0 + " " + x0r + " " + y0 + " c S\n");
+    }
+
+    var generate_pdf = function () {
+        let pdf = new PDFExporter();
+
+        pdf.info_id = pdf.create_object();
+
+        pdf.append(pdf.info_id + " 0 obj\n");
+        pdf.append("<< /Title (");
+        pdf.append_utf16be("Training Plan");
+        pdf.append(")\n");
+        pdf.append("   /Producer (");
+        pdf.append_utf16be("Training Planner (Made with ☕)");
+        pdf.append(")\n");
+        pdf.append(">>\nendobj\n");
+
+        let resource_id = pdf.create_object();
+
+        pdf.append(resource_id + " 0 obj\n");
+        pdf.append("<< /Font << /F1 " + (resource_id + 1) + " 0 R >>\n");
+        pdf.append(">>\nendobj\n");
+
+        let font_id = pdf.create_object();
+
+        pdf.append(font_id + " 0 obj\n");
+        pdf.append("<< /Type /Font\n");
+        pdf.append("   /Subtype /Type1\n");
+        pdf.append("   /BaseFont /Helvetica\n");
+        pdf.append(">>\nendobj\n");
+
+        pdf.root_id = pdf.create_object();
+
+        pdf.append(pdf.root_id + " 0 obj\n");
+        pdf.append("<< /Type /Catalog\n");
+        pdf.append("   /Pages " + (pdf.root_id + 1) + " 0 R\n");
+        pdf.append(">>\nendobj\n");
+
+        let pages_id = pdf.create_object();
+
+        pdf.append(pages_id + " 0 obj\n");
+        pdf.append("<< /Type /Pages\n");
+        pdf.append("   /Kids [" + (pages_id + 1) + " 0 R]\n");
+        pdf.append("   /Count 1\n");
+        pdf.append(">>\nendobj\n");
+
+        let page_id = pdf.create_object();
+
+        pdf.append(page_id + " 0 obj\n");
+        pdf.append("<< /Type /Page\n");
+        pdf.append("   /Parent " + pages_id + " 0 R\n");
+        pdf.append("   /Contents " + (page_id + 1) + " 0 R\n");
+        pdf.append("   /Resources " + resource_id + " 0 R\n");
+        pdf.append("   /MediaBox [0 0 841.8897638 595.2755906]\n");
+        pdf.append(">>\nendobj\n");
+
+        let cvs = document.createElement("canvas");
+        let ctx = cvs.getContext("2d");
+
+        let units_per_cm = 28.3464576;
+
+        let width  = 841.8897638;
+        let height = 595.2755906;
+
+        let padding_in_cm = 2;
+        let padding    = padding_in_cm * units_per_cm;
+        let pad_top    = padding;
+        let pad_right  = padding;
+        let pad_bottom = padding;
+        let pad_left   = 2.5 * padding;
+
+        let row_height = 30;
+        let row_distance = 6;
+
+        let content_width = width - (pad_left + pad_right);
+
+        let start_5_minute = Math.floor(schedule.min_time / 5);
+        let end_5_minute = Math.ceil(schedule.max_time / 5);
+
+        let units_per_minute = content_width / (5 * (end_5_minute - start_5_minute));
+
+        let stream = new StringBuilder(PDFExporter.MAX_FILE_SIZE);
+
+        let row_index = 0;
+
+        stream.append("q\n");
+
+        for (let trainer_index = 0; trainer_index < schedule.trainers.length; trainer_index += 1)
+        {
+            let trainer_id = schedule.trainers[trainer_index];
+
+            row_index += 1;
+
+            for (let instance_index = 0; instance_index < instances.length; instance_index += 1)
+            {
+                let instance = instances[instance_index];
+                let time_slot = schedule.time_slots[instance.slot_id];
+
+                if (time_slot.trainer_id === trainer_id)
+                {
+                    let x = pad_left + (instance.start_time - schedule.min_time) * units_per_minute;
+                    let y = height - (pad_top + row_index * (row_height + row_distance) + 0.5 * row_distance);
+
+                    let w = (instance.end_time - instance.start_time) * units_per_minute;
+
+                    cut_rounded_rect(stream, x + 1, y, x + w - 1, y + row_height, 2, width, height);
+                }
+            }
+        }
+
+        for (let step = start_5_minute; step <= end_5_minute; step += 1)
+        {
+            let time = step * 5;
+
+            let x = pad_left + ((step - start_5_minute) * 5 * units_per_minute);
+            let y1 = Math.max(pad_bottom, height - (pad_top + (schedule.trainers.length * (row_height + row_distance)) + row_distance));
+            stream.append("0.5 w 0 J 0.6 0.6 0.6 RG " + x + " " + (height - pad_top) + " m " + x + " " + y1 + " l S\n");
+            stream.append("0.4 0.4 0.4 rg BT /F1 7 Tf " + (x - 9) + " " + (height - pad_top + 4) + " Td (" + TimeSlot.time_to_string(time) + ")Tj ET\n");
+        }
+
+        stream.append("Q\n");
+
+        stream.append("0.5 w 0 J 0.6 0.6 0.6 RG " + padding + " " + (height - pad_top - row_distance) + " m " +
+                      (width - pad_right) + " " + (height - pad_top - row_distance) + " l S\n");
+
+        row_index = 0;
+
+        for (let trainer_index = 0; trainer_index < schedule.trainers.length; trainer_index += 1)
+        {
+            let trainer_id = schedule.trainers[trainer_index];
+            let trainer_name = schedule.people[trainer_id];
+
+            row_index += 1;
+
+            let y = height - (pad_top + row_index * (row_height + row_distance));
+
+            stream.append("0.1 0.1 0.1 rg BT /F1 9 Tf " + (padding + 8) + " " + (y + 0.4 * row_height - 0.5 * row_distance) + " Td (" + trainer_name + ")Tj ET\n");
+            stream.append("0.5 w 0 J 0.6 0.6 0.6 RG " + padding + " " + (y - row_distance) + " m " + (width - pad_right) + " " + (y - row_distance) + " l S\n");
+
+            for (let instance_index = 0; instance_index < instances.length; instance_index += 1)
+            {
+                let instance = instances[instance_index];
+                let time_slot = schedule.time_slots[instance.slot_id];
+
+                if (time_slot.trainer_id === trainer_id)
+                {
+                    let x = pad_left + (instance.start_time - schedule.min_time) * units_per_minute;
+                    let y = height - (pad_top + row_index * (row_height + row_distance) + 0.5 * row_distance);
+
+                    let w = (instance.end_time - instance.start_time) * units_per_minute;
+
+                    stroke_rounded_rect(stream, x + 1, y, x + w - 1, y + row_height, 0.5, 2);
+
+                    if (time_slot.is_fixed)
+                    {
+                        let label = time_slot.label;
+
+                        let label_size = 7;
+
+                        ctx.font = "normal " + (label_size * 0.75) + "pt Helvetica, sans-serif";
+                        let label_width = ctx.measureText(label).width;
+
+                        stream.append("0.6 0.6 0.6 rg BT /F1 " + label_size + " Tf " + (x + 0.5 * (w - label_width)) +
+                                      " " + (y + 0.45 * row_height) + " Td (" + label + ")Tj ET\n");
+                    }
+                    else
+                    {
+                        let gymnastic_equipment_id = time_slot.gymnastic_equipments[instance.gymnastic_equipment_index];
+
+                        let label = time_slot.label;
+                        let gymnast_name = schedule.people[time_slot.gymnast_id];
+                        let gymnastic_equipment_name = schedule.gymnastic_equipments[gymnastic_equipment_id];
+
+                        let label_size = 7;
+                        let name_size = 7;
+                        let gymnastic_equipment_size = 6;
+
+                        ctx.font = "normal " + (label_size * 0.75) + "pt Helvetica, sans-serif";
+                        let label_width = ctx.measureText(label).width;
+
+                        ctx.font = "normal " + (name_size * 0.75) + "pt Helvetica, sans-serif";
+                        let name_width = ctx.measureText(gymnast_name).width;
+
+                        ctx.font = "normal " + (gymnastic_equipment_size * 0.75) + "pt Helvetica, sans-serif";
+                        let gymnastic_equipment_width = ctx.measureText(gymnastic_equipment_name).width;
+
+                        let name_y = y + 0.56 * row_height;
+
+                        if (label.length)
+                        {
+                            name_y = y + 0.73 * row_height;
+                            stream.append("0.6 0.6 0.6 rg BT /F1 " + label_size + " Tf " + (x + 0.5 * (w - label_width)) +
+                                          " " + (y + 0.45 * row_height) + " Td (" + label + ")Tj ET\n");
+                        }
+
+                        stream.append("0.2 0.2 0.2 rg BT /F1 " + name_size + " Tf " + (x + 0.5 * (w - name_width)) +
+                                      " " + name_y + " Td (" + gymnast_name + ")Tj ET\n");
+
+                        {
+                            let x0 = x + 1.75;
+                            let y0 = y + 0.75;
+                            let x1 = x + w - 1.75;
+                            let y1 = y + 0.35 * row_height;
+
+                            let radius = 1.75;
+
+                            let x0r = x0 + radius;
+                            let x1r = x1 - radius;
+                            let y0r = y0 + radius;
+
+                            let c = radius * 0.551915024494;
+
+                            let x0c = x0r - c;
+                            let x1c = x1r + c;
+                            let y0c = y0r - c;
+
+                            stream.append("0.8 0.2 0.1 rg");
+                            stream.append(" " + x0r + " " + y0 + " m " + x1r + " " + y0 + " l " + x1c + " " + y0 + " " + x1 + " " + y0c + " " + x1 + " " + y0r + " c");
+                            stream.append(" " + x1 + " " + y1 + " l " + x0 + " " + y1 + " l");
+                            stream.append(" " + x0 + " " + y0r + " l " + x0 + " " + y0c + " " + x0c + " " + y0 + " " + x0r + " " + y0 + " c f\n");
+                        }
+
+                        stream.append("1 1 1 rg BT /F1 " + gymnastic_equipment_size + " Tf " + (x + 0.5 * (w - gymnastic_equipment_width)) +
+                                      " " + (y + 0.12 * row_height) + " Td (" + gymnastic_equipment_name + ")Tj ET\n");
+                    }
+                }
+            }
+        }
+
+        let content_id = pdf.create_object();
+
+        pdf.append(content_id + " 0 obj\n");
+        pdf.append("<< /Length " + stream.index + " >>\n");
+        pdf.append("stream\n");
+        pdf.append_string_builder(stream);
+        pdf.append("endstream\nendobj\n");
+
+        return pdf.finalize();
+    };
+
     var run_quick_check = function (sched) {
         let instances = [];
 
@@ -954,11 +1357,17 @@ class Parser
     var save_file = function () {
         if (schedule !== null)
         {
+            // TODO: change file name
             save_file_content("plan.txt", "plain/txt", schedule.to_string(true));
         }
     };
 
     var export_pdf = function () {
+        if (schedule !== null)
+        {
+            // TODO: change file name
+            save_file_content("plan.pdf", "application/pdf", generate_pdf());
+        }
     };
 
     var cancel_solving = function () {
