@@ -1,10 +1,20 @@
 const GYMNASTIC_EQUIPMENT_COLORS = [
-    { foreground: "darkslategray" , background: "darkseagreen"   },
-    { foreground: "gold"          , background: "goldenrod"      },
-    { foreground: "lightsteelblue", background: "lightslategray" },
-    { foreground: "salmon"        , background: "firebrick"      },
-    { foreground: "seashell"      , background: "silver"         },
-    { foreground: "turquoise"     , background: "teal"           },
+    { background: [  81 / 255,  84 / 255, 112 / 255 ], foreground: [  28 / 255,  29 / 255,  39 / 255 ] },
+    { background: [ 101 / 255,  79 / 255, 109 / 255 ], foreground: [  35 / 255,  28 / 255,  38 / 255 ] },
+    { background: [ 132 / 255,  57 / 255,  57 / 255 ], foreground: [  75 / 255,  22 / 255,  22 / 255 ] },
+    { background: [ 177 / 255, 118 / 255,  78 / 255 ], foreground: [ 119 / 255,  59 / 255,  19 / 255 ] },
+    { background: [ 154 / 255, 156 / 255,  38 / 255 ], foreground: [  66 / 255,  67 / 255,  30 / 255 ] },
+    { background: [  77 / 255, 141 / 255,  73 / 255 ], foreground: [  34 / 255,  65 / 255,  32 / 255 ] },
+    { background: [  86 / 255, 118 / 255, 116 / 255 ], foreground: [  31 / 255,  46 / 255,  44 / 255 ] },
+    { background: [ 210 / 255, 187 / 255,  55 / 255 ], foreground: [ 126 / 255, 112 / 255,  38 / 255 ] },
+    { background: [ 185 / 255, 116 / 255, 182 / 255 ], foreground: [ 117 / 255,  47 / 255, 113 / 255 ] },
+    { background: [ 136 / 255,  95 / 255,  68 / 255 ], foreground: [  89 / 255,  56 / 255,  34 / 255 ] },
+    { background: [ 181 / 255, 181 / 255, 181 / 255 ], foreground: [  66 / 255,  67 / 255,  77 / 255 ] },
+    { background: [ 210 / 255, 101 / 255, 108 / 255 ], foreground: [ 164 / 255,  45 / 255,  55 / 255 ] },
+    { background: [  80 / 255, 178 / 255, 180 / 255 ], foreground: [  34 / 255,  97 / 255,  98 / 255 ] },
+    { background: [  26 / 255,  35 / 255,  46 / 255 ], foreground: [ 186 / 255, 200 / 255, 216 / 255 ] },
+    { background: [  91 / 255, 134 / 255, 174 / 255 ], foreground: [  31 / 255,  66 / 255,  97 / 255 ] },
+    { background: [ 147 / 255, 152 / 255, 204 / 255 ], foreground: [  36 / 255,  44 / 255, 117 / 255 ] },
 ];
 
 class StringBuilder
@@ -956,8 +966,11 @@ class Parser
 
                         let color_index = gymnastic_equipment_id % GYMNASTIC_EQUIPMENT_COLORS.length;
 
-                        gymnastic_equipment_item.style.color = GYMNASTIC_EQUIPMENT_COLORS[color_index].foreground;
-                        gymnastic_equipment_item.style.background = GYMNASTIC_EQUIPMENT_COLORS[color_index].background;
+                        let fg = GYMNASTIC_EQUIPMENT_COLORS[color_index].foreground;
+                        let bg = GYMNASTIC_EQUIPMENT_COLORS[color_index].background;
+
+                        gymnastic_equipment_item.style.color      = "rgb(" + (fg[0] * 100) + "%, " + (fg[1] * 100) + "%, " + (fg[2] * 100) + "%)";
+                        gymnastic_equipment_item.style.background = "rgb(" + (bg[0] * 100) + "%, " + (bg[1] * 100) + "%, " + (bg[2] * 100) + "%)";
 
                         timeslot.appendChild(gymnastic_equipment_item);
                     }
@@ -1215,13 +1228,18 @@ class Parser
                         stream.append("0.2 0.2 0.2 rg BT /F1 " + name_size + " Tf " + (x + 0.5 * (w - name_width)) +
                                       " " + name_y + " Td (" + gymnast_name + ")Tj ET\n");
 
+                        let color_index = gymnastic_equipment_id % GYMNASTIC_EQUIPMENT_COLORS.length;
+
+                        let fg = GYMNASTIC_EQUIPMENT_COLORS[color_index].foreground;
+                        let bg = GYMNASTIC_EQUIPMENT_COLORS[color_index].background;
+
                         {
                             let x0 = x + 1.75;
                             let y0 = y + 0.75;
                             let x1 = x + w - 1.75;
                             let y1 = y + 0.35 * row_height;
 
-                            let radius = 1.75;
+                            let radius = 1.5;
 
                             let x0r = x0 + radius;
                             let x1r = x1 - radius;
@@ -1233,14 +1251,15 @@ class Parser
                             let x1c = x1r + c;
                             let y0c = y0r - c;
 
-                            stream.append("0.8 0.2 0.1 rg");
+                            stream.append(bg[0] + " " + bg[1] + " " + bg[2] + " rg");
                             stream.append(" " + x0r + " " + y0 + " m " + x1r + " " + y0 + " l " + x1c + " " + y0 + " " + x1 + " " + y0c + " " + x1 + " " + y0r + " c");
                             stream.append(" " + x1 + " " + y1 + " l " + x0 + " " + y1 + " l");
                             stream.append(" " + x0 + " " + y0r + " l " + x0 + " " + y0c + " " + x0c + " " + y0 + " " + x0r + " " + y0 + " c f\n");
                         }
 
-                        stream.append("1 1 1 rg BT /F1 " + gymnastic_equipment_size + " Tf " + (x + 0.5 * (w - gymnastic_equipment_width)) +
-                                      " " + (y + 0.12 * row_height) + " Td (" + gymnastic_equipment_name + ")Tj ET\n");
+                        stream.append(fg[0] + " " + fg[1] + " " + fg[2] + " rg BT /F1 " + gymnastic_equipment_size + " Tf " +
+                                      (x + 0.5 * (w - gymnastic_equipment_width)) + " " + (y + 0.12 * row_height) + " Td (" +
+                                      gymnastic_equipment_name + ")Tj ET\n");
                     }
                 }
             }

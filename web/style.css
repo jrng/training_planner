@@ -199,7 +199,7 @@ a {
 }
 
 .timeslot.collision {
-    border-color: red;
+    border-color: #d64343;
 }
 
 .timeslot:hover {
