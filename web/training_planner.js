@@ -515,7 +515,7 @@ class Parser
     {
         this.consume(Parser.TOKEN_ASSIGN, "Expected '=' after 'title'.");
         this.consume(Parser.TOKEN_STRING, "'title' has to be a string.");
-        schedule.title = this.content.slice(this.previous_token.i0, this.previous_token.i1);
+        schedule.set_title(this.content.slice(this.previous_token.i0, this.previous_token.i1));
         this.consume(Parser.TOKEN_SEMICOLON, "Expected ';' after assignment.");
     }
 

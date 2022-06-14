@@ -244,6 +244,13 @@ class Schedule
         this.gymnastic_equipments = [];
         this.time_slots = [];
         this.title = title;
+        this.title_was_set_by_user = false;
+    }
+
+    set_title(title)
+    {
+        this.title = title;
+        this.title_was_set_by_user = true;
     }
 
     get_person_index(name)
@@ -379,6 +386,11 @@ class Schedule
 
         if (beautify)
         {
+            if (this.title_was_set_by_user)
+            {
+                result += "title = \"" + this.title + "\";\n";
+            }
+
             result += "minimum_distance = " + this.minimum_distance + ";\n";
 
             for (let trainer_index = 0; trainer_index < this.trainers.length; trainer_index += 1)
@@ -437,6 +449,11 @@ class Schedule
         }
         else
         {
+            if (this.title_was_set_by_user)
+            {
+                result += "title=\"" + this.title + "\";";
+            }
+
             result += "minimum_distance=" + this.minimum_distance + ";";
 
             for (let trainer_index = 0; trainer_index < this.trainers.length; trainer_index += 1)
