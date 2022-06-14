@@ -7,7 +7,8 @@ const LANGUAGES = {
         abort:                      "Abort",
         solving_status:             "Solving status",
         backtracking:               "Backtracking",
-        were_successfully_placed:   "time slots were sucessfully placed."
+        were_successfully_placed:   "time slots were sucessfully placed.",
+        schedule_title:             "Unnamed Schedule"
     },
     "de": {
         open_file:                  "Öffnen",
@@ -17,7 +18,8 @@ const LANGUAGES = {
         abort:                      "Abbrechen",
         solving_status:             "Status",
         backtracking:               "Backtracking",
-        were_successfully_placed:   "Turneinheiten wurden erfolgreich platziert."
+        were_successfully_placed:   "Turneinheiten wurden erfolgreich platziert.",
+        schedule_title:             "Unbenannter Trainingsplan"
     }
 };
 
@@ -179,6 +181,7 @@ class Parser
     static TOKEN_LEFT_BRACE     = Symbol("TOKEN_LEFT_BRACE");
     static TOKEN_RIGHT_BRACE    = Symbol("TOKEN_RIGHT_BRACE");
     static TOKEN_DISTANCE       = Symbol("TOKEN_DISTANCE");
+    static TOKEN_TITLE          = Symbol("TOKEN_TITLE");
     static TOKEN_STRING         = Symbol("TOKEN_STRING");
     static TOKEN_NUMBER         = Symbol("TOKEN_NUMBER");
     static TOKEN_TIME           = Symbol("TOKEN_TIME");
@@ -267,6 +270,10 @@ class Parser
         if (token_str === "minimum_distance")
         {
             this.make_token(Parser.TOKEN_DISTANCE);
+        }
+        else if (token_str == "title")
+        {
+            this.make_token(Parser.TOKEN_TITLE);
         }
         else
         {
@@ -504,6 +511,14 @@ class Parser
         this.consume(Parser.TOKEN_SEMICOLON, "Expected ';' after assignment.");
     }
 
+    parse_title(schedule)
+    {
+        this.consume(Parser.TOKEN_ASSIGN, "Expected '=' after 'title'.");
+        this.consume(Parser.TOKEN_STRING, "'title' has to be a string.");
+        schedule.title = this.content.slice(this.previous_token.i0, this.previous_token.i1);
+        this.consume(Parser.TOKEN_SEMICOLON, "Expected ';' after assignment.");
+    }
+
     parse_trainer(schedule)
     {
         let trainer_id = schedule.get_person_index(this.content.slice(this.previous_token.i0, this.previous_token.i1));
@@ -578,9 +593,9 @@ class Parser
         this.consume(Parser.TOKEN_RIGHT_BRACE, "Expected '}'.");
     }
 
-    parse()
+    parse(schedule_title)
     {
-        let schedule = new Schedule();
+        let schedule = new Schedule(schedule_title);
 
         this.advance();
 
@@ -593,6 +608,11 @@ class Parser
                 case Parser.TOKEN_DISTANCE:
                 {
                     this.parse_distance(schedule);
+                } break;
+
+                case Parser.TOKEN_TITLE:
+                {
+                    this.parse_title(schedule);
                 } break;
 
                 case Parser.TOKEN_STRING:
@@ -634,6 +654,8 @@ class Parser
     const TIME_HELPER_PAD_TOP   = 2;
     const TIME_HELPER_PAD_RIGHT = 3;
     const TIME_HELPER_PAD_LEFT  = 0;
+
+    const PDF_FONT_FACTOR       = 0.75;
 
     var drag_offset = 0;
     var drag_target = null;
@@ -854,6 +876,15 @@ class Parser
         let timeline = document.getElementById("timeline");
 
         while (timeline.hasChildNodes()) timeline.removeChild(timeline.firstChild);
+
+        let title_bar = document.createElement("div");
+        title_bar.setAttribute("id", "title_bar");
+        let schedule_title = document.createElement("div");
+        schedule_title.setAttribute("id", "title");
+        schedule_title.appendChild(document.createTextNode(schedule.title));
+
+        title_bar.appendChild(schedule_title);
+        timeline.appendChild(title_bar);
 
         let start_5_minute = Math.floor(schedule.min_time / 5);
         let end_5_minute = Math.ceil(schedule.max_time / 5);
@@ -1117,22 +1148,42 @@ class Parser
         let cvs = document.createElement("canvas");
         let ctx = cvs.getContext("2d");
 
-        let units_per_cm = 28.3464576;
+        let units_per_inch = 72;
+        let inches_per_mm  = 1 / 25.4;
 
-        let width  = 841.8897638;
-        let height = 595.2755906;
+        let units_per_mm = units_per_inch * inches_per_mm;
 
-        let padding_in_cm = 2;
-        let padding    = padding_in_cm * units_per_cm;
-        let pad_top    = padding;
-        let pad_right  = padding;
-        let pad_bottom = padding;
-        let pad_left   = 2.5 * padding;
+        let width_mm  = 297;
+        let height_mm = 210;
+
+        let width  = units_per_mm * width_mm;
+        let height = units_per_mm * height_mm;
+
+        let safe_margin_top_mm    = 15;
+        let safe_margin_right_mm  = 15;
+        let safe_margin_bottom_mm = 15;
+        let safe_margin_left_mm   = 15;
+
+        let safe_margin_top    = units_per_mm * safe_margin_top_mm;
+        let safe_margin_right  = units_per_mm * safe_margin_right_mm;
+        let safe_margin_bottom = units_per_mm * safe_margin_bottom_mm;
+        let safe_margin_left   = units_per_mm * safe_margin_left_mm;
+
+        let trainer_name_width_mm = 25;
+        let trainer_name_width = units_per_mm * trainer_name_width_mm;
+
+        let title_bar_height = 40;
+
+        let time_slots_x_min = safe_margin_left + trainer_name_width;
+        let time_slots_x_max = width - safe_margin_right;
+
+        let time_slots_y_min = safe_margin_bottom;
+        let time_slots_y_max = height - (safe_margin_top + title_bar_height);
 
         let row_height = 30;
         let row_distance = 6;
 
-        let content_width = width - (pad_left + pad_right);
+        let content_width = time_slots_x_max - time_slots_x_min;
 
         let start_5_minute = Math.floor(schedule.min_time / 5);
         let end_5_minute = Math.ceil(schedule.max_time / 5);
@@ -1142,6 +1193,14 @@ class Parser
         let stream = new StringBuilder(PDFExporter.MAX_FILE_SIZE);
 
         let row_index = 0;
+
+        /* draw the content rect */
+        // stream.append("0.5 w 0 J 0.6 0.6 0.6 RG " +
+        //               safe_margin_left + " " + safe_margin_bottom + " m " +
+        //               (width - safe_margin_right) + " " + safe_margin_bottom + " l " +
+        //               (width - safe_margin_right) + " " + (height - safe_margin_top) + " l " +
+        //               safe_margin_left + " " + (height - safe_margin_top) + " l " +
+        //               safe_margin_left + " " + safe_margin_bottom + " l S\n");
 
         stream.append("q\n");
 
@@ -1158,8 +1217,8 @@ class Parser
 
                 if (time_slot.trainer_id === trainer_id)
                 {
-                    let x = pad_left + (instance.start_time - schedule.min_time) * units_per_minute;
-                    let y = height - (pad_top + row_index * (row_height + row_distance) + 0.5 * row_distance);
+                    let x = time_slots_x_min + (instance.start_time - schedule.min_time) * units_per_minute;
+                    let y = time_slots_y_max - (row_index * (row_height + row_distance) + 0.5 * row_distance);
 
                     let w = (instance.end_time - instance.start_time) * units_per_minute;
 
@@ -1172,16 +1231,26 @@ class Parser
         {
             let time = step * 5;
 
-            let x = pad_left + ((step - start_5_minute) * 5 * units_per_minute);
-            let y1 = Math.max(pad_bottom, height - (pad_top + (schedule.trainers.length * (row_height + row_distance)) + row_distance));
-            stream.append("0.5 w 0 J 0.6 0.6 0.6 RG " + x + " " + (height - pad_top) + " m " + x + " " + y1 + " l S\n");
-            stream.append("0.4 0.4 0.4 rg BT /F1 7 Tf " + (x - 9) + " " + (height - pad_top + 4) + " Td (" + TimeSlot.time_to_string(time) + ")Tj ET\n");
+            let x = time_slots_x_min + ((step - start_5_minute) * 5 * units_per_minute);
+            let y1 = Math.max(time_slots_y_min, time_slots_y_max - ((schedule.trainers.length * (row_height + row_distance)) + row_distance));
+            stream.append("0.5 w 0 J 0.6 0.6 0.6 RG " + x + " " + time_slots_y_max + " m " + x + " " + y1 + " l S\n");
+            stream.append("0.4 0.4 0.4 rg BT /F1 7 Tf " + (x - 9) + " " + (time_slots_y_max + 4) + " Td (" + TimeSlot.time_to_string(time) + ")Tj ET\n");
         }
 
         stream.append("Q\n");
 
-        stream.append("0.5 w 0 J 0.6 0.6 0.6 RG " + padding + " " + (height - pad_top - row_distance) + " m " +
-                      (width - pad_right) + " " + (height - pad_top - row_distance) + " l S\n");
+        let title_size = 14;
+        let title = schedule.title;
+
+        ctx.font = "normal " + (title_size * PDF_FONT_FACTOR) + "pt Helvetica, sans-serif";
+        let title_width = ctx.measureText(title).width;
+        let box_width = width - (safe_margin_left + safe_margin_right);
+
+        stream.append("0.3 0.3 0.3 rg BT /F1 " + title_size + " Tf " + (safe_margin_left + 0.5 * (box_width - title_width)) +
+                      " " + (height - safe_margin_top - 14) + " Td (" + title + ")Tj ET\n");
+
+        stream.append("0.5 w 0 J 0.6 0.6 0.6 RG " + safe_margin_left + " " + (time_slots_y_max - row_distance) + " m " +
+                      time_slots_x_max + " " + (time_slots_y_max - row_distance) + " l S\n");
 
         row_index = 0;
 
@@ -1192,10 +1261,10 @@ class Parser
 
             row_index += 1;
 
-            let y = height - (pad_top + row_index * (row_height + row_distance));
+            let y = time_slots_y_max - (row_index * (row_height + row_distance));
 
-            stream.append("0.1 0.1 0.1 rg BT /F1 9 Tf " + (padding + 8) + " " + (y + 0.4 * row_height - 0.5 * row_distance) + " Td (" + trainer_name + ")Tj ET\n");
-            stream.append("0.5 w 0 J 0.6 0.6 0.6 RG " + padding + " " + (y - row_distance) + " m " + (width - pad_right) + " " + (y - row_distance) + " l S\n");
+            stream.append("0.1 0.1 0.1 rg BT /F1 9 Tf " + (safe_margin_left + 8) + " " + (y + 0.4 * row_height - 0.5 * row_distance) + " Td (" + trainer_name + ")Tj ET\n");
+            stream.append("0.5 w 0 J 0.6 0.6 0.6 RG " + safe_margin_left + " " + (y - row_distance) + " m " + time_slots_x_max + " " + (y - row_distance) + " l S\n");
 
             for (let instance_index = 0; instance_index < instances.length; instance_index += 1)
             {
@@ -1204,8 +1273,8 @@ class Parser
 
                 if (time_slot.trainer_id === trainer_id)
                 {
-                    let x = pad_left + (instance.start_time - schedule.min_time) * units_per_minute;
-                    let y = height - (pad_top + row_index * (row_height + row_distance) + 0.5 * row_distance);
+                    let x = time_slots_x_min + (instance.start_time - schedule.min_time) * units_per_minute;
+                    let y = time_slots_y_max - (row_index * (row_height + row_distance) + 0.5 * row_distance);
 
                     let w = (instance.end_time - instance.start_time) * units_per_minute;
 
@@ -1217,7 +1286,7 @@ class Parser
 
                         let label_size = 7;
 
-                        ctx.font = "normal " + (label_size * 0.75) + "pt Helvetica, sans-serif";
+                        ctx.font = "normal " + (label_size * PDF_FONT_FACTOR) + "pt Helvetica, sans-serif";
                         let label_width = ctx.measureText(label).width;
 
                         stream.append("0.6 0.6 0.6 rg BT /F1 " + label_size + " Tf " + (x + 0.5 * (w - label_width)) +
@@ -1235,13 +1304,13 @@ class Parser
                         let name_size = 7;
                         let gymnastic_equipment_size = 6;
 
-                        ctx.font = "normal " + (label_size * 0.75) + "pt Helvetica, sans-serif";
+                        ctx.font = "normal " + (label_size * PDF_FONT_FACTOR) + "pt Helvetica, sans-serif";
                         let label_width = ctx.measureText(label).width;
 
-                        ctx.font = "normal " + (name_size * 0.75) + "pt Helvetica, sans-serif";
+                        ctx.font = "normal " + (name_size * PDF_FONT_FACTOR) + "pt Helvetica, sans-serif";
                         let name_width = ctx.measureText(gymnast_name).width;
 
-                        ctx.font = "normal " + (gymnastic_equipment_size * 0.75) + "pt Helvetica, sans-serif";
+                        ctx.font = "normal " + (gymnastic_equipment_size * PDF_FONT_FACTOR) + "pt Helvetica, sans-serif";
                         let gymnastic_equipment_width = ctx.measureText(gymnastic_equipment_name).width;
 
                         let name_y = y + 0.56 * row_height;
@@ -1366,7 +1435,7 @@ class Parser
 
     var load_plan = function (filename, str) {
         let parser = new Parser(str);
-        let new_schedule = parser.parse();
+        let new_schedule = parser.parse(user_language.schedule_title);
 
         if (new_schedule !== null)
         {

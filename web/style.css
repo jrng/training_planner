@@ -103,7 +103,7 @@ a {
 
 #timeline {
     min-width: fit-content;
-    padding: 30px 20px;
+    padding: 25px 20px 30px 20px;
 }
 
 .solving_status {
@@ -121,6 +121,19 @@ a {
 .solving_status h2 {
     color: #717383;
     font: normal normal 14px/16px "Work Sans", sans-serif;
+}
+
+#title_bar {
+    margin: 0 auto;
+    padding-bottom: 15px;
+}
+
+#title {
+    color: #aeb0be;
+    margin: 0 auto;
+    padding: 2px 4px;
+    width: fit-content;
+    font: normal normal 18px/20px "Work Sans", sans-serif;
 }
 
 #timestamps {

@@ -236,13 +236,14 @@ class Backtracking
 
 class Schedule
 {
-    constructor()
+    constructor(title)
     {
         this.people = [];
         this.person_counts = [];
         this.trainers = [];
         this.gymnastic_equipments = [];
         this.time_slots = [];
+        this.title = title;
     }
 
     get_person_index(name)
