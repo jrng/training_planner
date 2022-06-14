@@ -652,6 +652,8 @@ class Parser
 
     var number_of_placements = null;
 
+    var base_filename = "unnamed_plan";
+
     var schedule = null;
     var instances = [];
 
@@ -1362,12 +1364,21 @@ class Parser
         return instances;
     };
 
-    var load_plan = function (str) {
+    var load_plan = function (filename, str) {
         let parser = new Parser(str);
         let new_schedule = parser.parse();
 
         if (new_schedule !== null)
         {
+            let extension_start = filename.lastIndexOf(".");
+
+            if (extension_start !== -1)
+            {
+                filename = filename.substring(0, extension_start);
+            }
+
+            base_filename = filename;
+
             schedule = new_schedule;
             instances = run_quick_check(schedule);
 
@@ -1381,8 +1392,8 @@ class Parser
     };
 
     var on_file_selected = function () {
-        let blob = file_picker.files[0];
-        blob.text().then(str => load_plan(str));
+        let file = file_picker.files[0];
+        file.text().then(str => load_plan(file.name, str));
     };
 
     var open_file = function () {
@@ -1402,16 +1413,14 @@ class Parser
     var save_file = function () {
         if (schedule !== null)
         {
-            // TODO: change file name
-            save_file_content("plan.txt", "plain/txt", schedule.to_string(true));
+            save_file_content(base_filename + ".txt", "plain/txt", schedule.to_string(true));
         }
     };
 
     var export_pdf = function () {
         if (schedule !== null)
         {
-            // TODO: change file name
-            save_file_content("plan.pdf", "application/pdf", generate_pdf());
+            save_file_content(base_filename + ".pdf", "application/pdf", generate_pdf());
         }
     };
 
