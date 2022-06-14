@@ -1,3 +1,26 @@
+const LANGUAGES = {
+    "en": {
+        open_file:                  "Open",
+        save_file:                  "Save",
+        export_pdf:                 "Export pdf",
+        solve:                      "Solve",
+        abort:                      "Abort",
+        solving_status:             "Solving status",
+        backtracking:               "Backtracking",
+        were_successfully_placed:   "time slots were sucessfully placed."
+    },
+    "de": {
+        open_file:                  "Öffnen",
+        save_file:                  "Speichern",
+        export_pdf:                 "PDF exportieren",
+        solve:                      "Plan berechnen",
+        abort:                      "Abbrechen",
+        solving_status:             "Status",
+        backtracking:               "Backtracking",
+        were_successfully_placed:   "Turneinheiten wurden erfolgreich platziert."
+    }
+};
+
 const GYMNASTIC_EQUIPMENT_COLORS = [
     { background: [  81 / 255,  84 / 255, 112 / 255 ], foreground: [  28 / 255,  29 / 255,  39 / 255 ] },
     { background: [ 101 / 255,  79 / 255, 109 / 255 ], foreground: [  35 / 255,  28 / 255,  38 / 255 ] },
@@ -619,6 +642,9 @@ class Parser
     var drag_pointer_id = null;
     var drag_changed_time_slot = false;
 
+    var user_language_name = "en";
+    var user_language = LANGUAGES["en"];
+
     var file_picker = null;
 
     var canvas = null;
@@ -631,7 +657,7 @@ class Parser
 
     var main_worker_thread = null;
 
-    var changeText = function (elem, text) {
+    var change_text = function (elem, text) {
         while (elem.hasChildNodes()) elem.removeChild(elem.firstChild);
         elem.appendChild(document.createTextNode(text));
     };
@@ -792,12 +818,12 @@ class Parser
         container.classList.add("solving_status");
 
         let heading = document.createElement("h1");
-        heading.appendChild(document.createTextNode("Solving status"));
+        heading.appendChild(document.createTextNode(user_language.solving_status));
 
         container.appendChild(heading);
 
         let backtracking = document.createElement("h2");
-        backtracking.appendChild(document.createTextNode("Backtracking"));
+        backtracking.appendChild(document.createTextNode(user_language.backtracking));
 
         container.appendChild(backtracking);
 
@@ -807,12 +833,12 @@ class Parser
         number_of_placements.appendChild(document.createTextNode("0"));
 
         backtracking_state.appendChild(number_of_placements);
-        backtracking_state.appendChild(document.createTextNode(" / " + schedule.time_slots.length + " time slots were successfully placed."));
+        backtracking_state.appendChild(document.createTextNode(" / " + schedule.time_slots.length + " " + user_language.were_successfully_placed));
 
         container.appendChild(backtracking_state);
 
         let abort_button = document.createElement("button");
-        abort_button.appendChild(document.createTextNode("Abort"));
+        abort_button.appendChild(document.createTextNode(user_language.abort));
         abort_button.classList.add("fill_button");
 
         abort_button.addEventListener("click", cancel_solving);
@@ -1031,7 +1057,7 @@ class Parser
         builder.append(" " + x1 + " " + y1r + " l " + x1 + " " + y1c + " " + x1c + " " + y1 + " " + x1r + " " + y1 + " c");
         builder.append(" " + x0r + " " + y1 + " l " + x0c + " " + y1 + " " + x0 + " " + y1c + " " + x0 + " " + y1r + " c");
         builder.append(" " + x0 + " " + y0r + " l " + x0 + " " + y0c + " " + x0c + " " + y0 + " " + x0r + " " + y0 + " c S\n");
-    }
+    };
 
     var generate_pdf = function () {
         let pdf = new PDFExporter();
@@ -1397,7 +1423,7 @@ class Parser
         start_solving_button.removeEventListener("click", cancel_solving);
         start_solving_button.addEventListener("click", start_solving);
 
-        changeText(start_solving_button, "Solve");
+        change_text(start_solving_button, user_language.solve);
 
         build_schedule_timeline();
     };
@@ -1410,7 +1436,7 @@ class Parser
             start_solving_button.removeEventListener("click", start_solving);
             start_solving_button.addEventListener("click", cancel_solving);
 
-            changeText(start_solving_button, "Abort");
+            change_text(start_solving_button, user_language.abort);
 
             build_solving_status();
             main_worker_thread.postMessage({ cmd: "start_solving", schedule: schedule });
@@ -1446,7 +1472,7 @@ class Parser
                 start_solving_button.removeEventListener("click", cancel_solving);
                 start_solving_button.addEventListener("click", start_solving);
 
-                changeText(start_solving_button, "Solve");
+                change_text(start_solving_button, user_language.solve);
 
                 build_schedule_timeline();
                 on_instances_changed();
@@ -1459,7 +1485,7 @@ class Parser
                 start_solving_button.removeEventListener("click", cancel_solving);
                 start_solving_button.addEventListener("click", start_solving);
 
-                changeText(start_solving_button, "Solve");
+                change_text(start_solving_button, user_language.solve);
 
                 build_schedule_timeline();
 
@@ -1468,8 +1494,28 @@ class Parser
 
             case "solve_status":
             {
-                changeText(number_of_placements, String(message.data.best_slot_count));
+                change_text(number_of_placements, String(message.data.best_slot_count));
             } break;
+        }
+    };
+
+    var change_element_text = function (element_id, text) {
+        change_text(document.getElementById(element_id), text);
+    };
+
+    var set_language = function (lang) {
+        if ((typeof(lang) === "string") && (lang !== user_language_name))
+        {
+            if ((lang === "en") || (lang === "de"))
+            {
+                user_language_name = lang;
+                user_language = LANGUAGES[lang];
+
+                change_element_text("open_file", user_language.open_file);
+                change_element_text("save_file", user_language.save_file);
+                change_element_text("export_pdf", user_language.export_pdf);
+                change_element_text("start_solving", user_language.solve);
+            }
         }
     };
 
@@ -1482,6 +1528,9 @@ class Parser
         document.getElementById("save_file").addEventListener("click", save_file);
         document.getElementById("export_pdf").addEventListener("click", export_pdf);
         document.getElementById("start_solving").addEventListener("click", start_solving);
+
+        let browser_language = navigator.language.split("-")[0];
+        set_language(browser_language);
 
         main_worker_thread = new Worker("main_worker_thread.js");
         main_worker_thread.addEventListener("message", handle_main_worker_thread_message);
