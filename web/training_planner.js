@@ -678,6 +678,7 @@ class Parser
 
     var schedule = null;
     var instances = [];
+    var best_instances = [];
 
     var main_worker_thread = null;
 
@@ -1503,6 +1504,20 @@ class Parser
 
         change_text(start_solving_button, user_language.solve);
 
+        for (let i = 0; i < instances.length; i += 1)
+        {
+            for (let j = 0; j < best_instances.length; j += 1)
+            {
+                if (instances[i].slot_id === best_instances[j].slot_id)
+                {
+                    instances[i].gymnastic_equipment_index = best_instances[j].gymnastic_equipment_index;
+                    instances[i].start_time                = best_instances[j].start_time;
+                    instances[i].end_time                  = best_instances[j].end_time;
+                    break;
+                }
+            }
+        }
+
         build_schedule_timeline();
     };
 
@@ -1516,8 +1531,15 @@ class Parser
 
             change_text(start_solving_button, user_language.abort);
 
+            best_instances = [];
+
+            for (let i = 0; i < instances.length; i += 1)
+            {
+                best_instances.push(Object.assign({}, instances[i]));
+            }
+
             build_solving_status();
-            main_worker_thread.postMessage({ cmd: "start_solving", schedule: schedule });
+            main_worker_thread.postMessage({ cmd: "start_solving", schedule: schedule, instances: best_instances });
         }
     };
 
@@ -1572,6 +1594,7 @@ class Parser
 
             case "solve_status":
             {
+                best_instances = message.data.instances;
                 change_text(number_of_placements, String(message.data.best_slot_count));
             } break;
         }
