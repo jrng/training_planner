@@ -221,9 +221,10 @@ a {
 }
 
 #timeline_canvas .head_cell {
-    width: 39px;
-    height: 13px;
+    width: 40px;
+    height: 14px;
     vertical-align: top;
+    box-sizing: border-box;
     display: inline flow-root;
     border-right: 1px solid #333445;
     border-bottom: 1px solid #333445;
@@ -242,9 +243,10 @@ a {
 }
 
 #timeline_canvas .cell {
-    width: 39px;
-    height: 59px;
+    width: 40px;
+    height: 60px;
     vertical-align: top;
+    box-sizing: border-box;
     display: inline flow-root;
     border-right: 1px solid #333445;
     border-bottom: 1px solid #333445;
