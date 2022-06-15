@@ -108,19 +108,34 @@ a {
 
 .solving_status {
     width: 350px;
+    padding: 16px 12px;
     margin: 0 auto;
     color: #aeb0be;
+    background: #272936;
+    border-radius: 4px;
+    border: 1px solid #333445;
     font: normal normal 12px/14px "Work Sans", sans-serif;
 }
 
 .solving_status h1 {
     color: #717383;
-    font: normal normal 16px/20px "Work Sans", sans-serif;
+    color: #cccedb;
+    text-align: center;
+    margin: 4px 0;
+    font: normal normal 18px/20px "Work Sans", sans-serif;
 }
 
 .solving_status h2 {
-    color: #717383;
+    color: #c0c2d0;
+    text-align: center;
+    padding: 8px;
+    margin: 4px 0;
+    border-bottom: 1px solid #1c1d27;
     font: normal normal 14px/16px "Work Sans", sans-serif;
+}
+
+.solving_status p {
+    text-align: center;
 }
 
 #title_bar {
@@ -303,4 +318,28 @@ a {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+@keyframes progress-anim {
+    0%     { box-shadow: #4e5164 -11px 6px 0 3px, #4e5164 -11px 6px 0 3px; }
+    16.67% { box-shadow: #4e5164 -11px 6px 0 3px, #4e5164  11px 6px 0 3px; }
+    33.33% { box-shadow: #4e5164 -11px 6px 0 3px, #4e5164 -11px 6px 0 3px; }
+    50%    { box-shadow: #4e5164  11px 6px 0 3px, #4e5164  11px 6px 0 3px; }
+    66.67% { box-shadow: #4e5164  11px 6px 0 3px, #4e5164 -11px 6px 0 3px; }
+    83.33% { box-shadow: #4e5164  11px 6px 0 3px, #4e5164  11px 6px 0 3px; }
+    100%   { box-shadow: #4e5164 -11px 6px 0 3px, #4e5164 -11px 6px 0 3px; }
+}
+
+.progress-anim:not(:required) {
+    margin: 4px auto 16px;
+    overflow: hidden;
+    position: relative;
+    text-indent: -9999px;
+    width: 2px;
+    height: 2px;
+    background: transparent;
+    border-radius: 100%;
+    box-shadow: #4e5164 -11px 6px 0 3px, #4e5164 -11px 6px 0 3px;
+    animation: progress-anim 3.5s infinite ease-in-out;
+    transform-origin: 50% 50%;
 }

@@ -881,10 +881,9 @@ class Parser
         let container = document.createElement("div");
         container.classList.add("solving_status");
 
-        let heading = document.createElement("h1");
-        heading.appendChild(document.createTextNode(user_language.solving_status));
-
-        container.appendChild(heading);
+        let progress_animation = document.createElement("div");
+        progress_animation.classList.add("progress-anim");
+        container.appendChild(progress_animation);
 
         let backtracking = document.createElement("h2");
         backtracking.appendChild(document.createTextNode(user_language.backtracking));
@@ -904,6 +903,8 @@ class Parser
         let abort_button = document.createElement("button");
         abort_button.appendChild(document.createTextNode(user_language.abort));
         abort_button.classList.add("fill_button");
+        abort_button.style.margin = "24px auto 0";
+        abort_button.style.display = "block";
 
         abort_button.addEventListener("click", cancel_solving);
 
