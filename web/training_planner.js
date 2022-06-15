@@ -834,6 +834,45 @@ class Parser
         }
     };
 
+    var end_title_edit = function (ev) {
+        let title_bar = document.getElementById("title_bar");
+        let title_edit_box = document.getElementById("title_edit_box");
+
+        let new_title = title_edit_box.value;
+
+        if (new_title !== schedule.title)
+        {
+            schedule.set_title(new_title);
+        }
+
+        let title = document.createElement("div");
+        title.setAttribute("id", "title");
+        title.addEventListener("click", begin_title_edit);
+        title.appendChild(document.createTextNode(schedule.title));
+
+        let pen_icon = document.createElement("span");
+        pen_icon.classList.add("pen_icon");
+        pen_icon.appendChild(document.createTextNode("(edit)"));
+        title.appendChild(pen_icon);
+
+        title_bar.replaceChild(title, title_edit_box);
+    };
+
+    var begin_title_edit = function (ev) {
+        let title_bar = document.getElementById("title_bar");
+        let title = document.getElementById("title");
+
+        let title_edit_box = document.createElement("input");
+        title_edit_box.setAttribute("type", "text");
+        title_edit_box.setAttribute("id", "title_edit_box");
+        title_edit_box.value = schedule.title;
+        title_edit_box.addEventListener("focusout", end_title_edit);
+
+        title_bar.replaceChild(title_edit_box, title);
+
+        title_edit_box.focus();
+    };
+
     var build_solving_status = function () {
         let timeline = document.getElementById("timeline");
 
@@ -882,7 +921,13 @@ class Parser
         title_bar.setAttribute("id", "title_bar");
         let schedule_title = document.createElement("div");
         schedule_title.setAttribute("id", "title");
+        schedule_title.addEventListener("click", begin_title_edit);
         schedule_title.appendChild(document.createTextNode(schedule.title));
+
+        let pen_icon = document.createElement("span");
+        pen_icon.classList.add("pen_icon");
+        pen_icon.appendChild(document.createTextNode("(edit)"));
+        schedule_title.appendChild(pen_icon);
 
         title_bar.appendChild(schedule_title);
         timeline.appendChild(title_bar);

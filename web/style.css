@@ -129,11 +129,35 @@ a {
 }
 
 #title {
+    cursor: text;
     color: #aeb0be;
     margin: 0 auto;
-    padding: 2px 4px;
+    padding: 3px 4px;
     width: fit-content;
-    font: normal normal 18px/20px "Work Sans", sans-serif;
+    user-select: none;
+    font: normal normal 18px/22px "Work Sans", sans-serif;
+}
+
+#title_edit_box {
+    color: #aeb0be;
+    margin: 0 auto;
+    display: block;
+    background: #272936;
+    border: 1px solid #405aff;
+    padding: 2px 4px;
+    border-radius: 2px;
+    width: fit-content;
+    font: normal normal 18px/22px "Work Sans", sans-serif;
+}
+
+.pen_icon {
+    color: #4e5164;
+    margin-left: 4px;
+    font: normal normal 10px/12px "Work Sans", sans-serif;
+}
+
+#title_edit_box:focus {
+    outline: none;
 }
 
 #timestamps {
@@ -229,6 +253,7 @@ a {
     border-radius: 4px;
     position: absolute;
     touch-action: none;
+    user-select: none;
     top: 17px;
     left: 101px;
 }
