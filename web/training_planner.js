@@ -740,7 +740,102 @@ class Parser
         }
     };
 
+    var has_local_storage = function () {
+        try {
+            let x = "__local_storage_test__";
+            localStorage.setItem(x, x);
+            localStorage.removeItem(x);
+            return true;
+        } catch (e) {
+            return (e instanceof DOMException) &&
+                   ((e.code === 22) || (e.code === 1014) || (e.name === "QuotaExceededError") || (e.name === "NS_ERROR_DOM_QUOTA_REACHED")) &&
+                   (localStorage && (localStorage.length !== 0));
+        }
+    };
+
+    // TODO: storage filename and timestamp in local storage
+
+    var load_from_local_storage = function (index) {
+        if (has_local_storage())
+        {
+            let saved_state_str = localStorage.getItem("saved_state");
+
+            if (saved_state_str !== null)
+            {
+                let saved_state = JSON.parse(saved_state_str);
+
+                if (Array.isArray(saved_state) && (saved_state.length > 0))
+                {
+                    if (index >= saved_state.length)
+                    {
+                        index = 0;
+                    }
+
+                    base_filename = "unnamed_schedule";
+
+                    schedule = Object.assign(new Schedule(), saved_state[index].schedule);
+                    instances = saved_state[index].instances;
+
+                    schedule.storage_index = index;
+
+                    document.getElementById("save_file").removeAttribute("disabled");
+                    document.getElementById("export_pdf").removeAttribute("disabled");
+                    document.getElementById("start_solving").removeAttribute("disabled");
+
+                    build_schedule_timeline();
+                    on_schedule_or_instances_changed();
+                }
+            }
+        }
+    };
+
+    var store_to_local_storage = function () {
+        if (has_local_storage())
+        {
+            let saved_state_str = localStorage.getItem("saved_state");
+
+            if (saved_state_str !== null)
+            {
+                let saved_state = JSON.parse(saved_state_str);
+
+                if (Array.isArray(saved_state))
+                {
+                    if ((saved_state.length >= 0) && (schedule.storage_index < saved_state.length))
+                    {
+                        saved_state[schedule.storage_index] = { schedule: schedule, instances: instances };
+                    }
+                    else
+                    {
+                        schedule.storage_index = saved_state.length;
+                        saved_state.push({ schedule: schedule, instances: instances });
+                    }
+                }
+                else
+                {
+                    schedule.storage_index = 0;
+                    saved_state = [{ schedule: schedule, instances: instances }];
+                }
+
+                localStorage.setItem("saved_state", JSON.stringify(saved_state));
+            }
+            else
+            {
+                schedule.storage_index = 0;
+                let saved_state = [{ schedule: schedule, instances: instances }];
+                localStorage.setItem("saved_state", JSON.stringify(saved_state));
+            }
+        }
+    };
+
+    var on_schedule_or_instances_changed = function () {
+        if (schedule !== null)
+        {
+            store_to_local_storage();
+        }
+    };
+
     var on_instances_changed = function () {
+        on_schedule_or_instances_changed();
     };
 
     var pointer_move = function (ev) {
@@ -843,6 +938,7 @@ class Parser
         if (new_title !== schedule.title)
         {
             schedule.set_title(new_title);
+            on_schedule_or_instances_changed();
         }
 
         let title = document.createElement("div");
@@ -1503,7 +1599,7 @@ class Parser
             document.getElementById("start_solving").removeAttribute("disabled");
 
             build_schedule_timeline();
-            on_instances_changed();
+            on_schedule_or_instances_changed();
         }
     };
 
@@ -1565,6 +1661,7 @@ class Parser
         }
 
         build_schedule_timeline();
+        on_instances_changed();
     };
 
     var start_solving = function () {
@@ -1678,6 +1775,8 @@ class Parser
 
         let browser_language = navigator.language.split("-")[0];
         set_language(browser_language);
+
+        load_from_local_storage(0);
 
         main_worker_thread = new Worker("main_worker_thread.js");
         main_worker_thread.addEventListener("message", handle_main_worker_thread_message);

@@ -244,6 +244,7 @@ class Schedule
         this.gymnastic_equipments = [];
         this.time_slots = [];
         this.title = title;
+        this.storage_index = -1;
         this.title_was_set_by_user = false;
     }
 
