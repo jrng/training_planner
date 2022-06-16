@@ -1639,12 +1639,10 @@ class Parser
     var cancel_solving = function () {
         main_worker_thread.postMessage({ cmd: "cancel_solving" });
 
-        let start_solving_button = document.getElementById("start_solving");
-
-        start_solving_button.removeEventListener("click", cancel_solving);
-        start_solving_button.addEventListener("click", start_solving);
-
-        change_text(start_solving_button, user_language.solve);
+        document.getElementById("open_file").removeAttribute("disabled");
+        document.getElementById("save_file").removeAttribute("disabled");
+        document.getElementById("export_pdf").removeAttribute("disabled");
+        document.getElementById("start_solving").removeAttribute("disabled");
 
         for (let i = 0; i < instances.length; i += 1)
         {
@@ -1667,12 +1665,10 @@ class Parser
     var start_solving = function () {
         if (schedule)
         {
-            let start_solving_button = document.getElementById("start_solving");
-
-            start_solving_button.removeEventListener("click", start_solving);
-            start_solving_button.addEventListener("click", cancel_solving);
-
-            change_text(start_solving_button, user_language.abort);
+            document.getElementById("open_file").setAttribute("disabled", "");
+            document.getElementById("save_file").setAttribute("disabled", "");
+            document.getElementById("export_pdf").setAttribute("disabled", "");
+            document.getElementById("start_solving").setAttribute("disabled", "");
 
             best_instances = [];
 
@@ -1710,12 +1706,10 @@ class Parser
                     }
                 }
 
-                let start_solving_button = document.getElementById("start_solving");
-
-                start_solving_button.removeEventListener("click", cancel_solving);
-                start_solving_button.addEventListener("click", start_solving);
-
-                change_text(start_solving_button, user_language.solve);
+                document.getElementById("open_file").removeAttribute("disabled");
+                document.getElementById("save_file").removeAttribute("disabled");
+                document.getElementById("export_pdf").removeAttribute("disabled");
+                document.getElementById("start_solving").removeAttribute("disabled");
 
                 build_schedule_timeline();
                 on_instances_changed();
@@ -1723,12 +1717,10 @@ class Parser
 
             case "no_solution":
             {
-                let start_solving_button = document.getElementById("start_solving");
-
-                start_solving_button.removeEventListener("click", cancel_solving);
-                start_solving_button.addEventListener("click", start_solving);
-
-                change_text(start_solving_button, user_language.solve);
+                document.getElementById("open_file").removeAttribute("disabled");
+                document.getElementById("save_file").removeAttribute("disabled");
+                document.getElementById("export_pdf").removeAttribute("disabled");
+                document.getElementById("start_solving").removeAttribute("disabled");
 
                 build_schedule_timeline();
 
