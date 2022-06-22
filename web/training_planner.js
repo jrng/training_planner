@@ -929,6 +929,23 @@ class Parser
         }
     };
 
+    var abort_title_edit = function (ev) {
+        let title_bar = document.getElementById("title_bar");
+        let title_edit_box = document.getElementById("title_edit_box");
+
+        let title = document.createElement("div");
+        title.setAttribute("id", "title");
+        title.addEventListener("click", begin_title_edit);
+        title.appendChild(document.createTextNode(schedule.title));
+
+        let pen_icon = document.createElement("span");
+        pen_icon.classList.add("pen_icon");
+        pen_icon.appendChild(document.createTextNode("(edit)"));
+        title.appendChild(pen_icon);
+
+        title_bar.replaceChild(title, title_edit_box);
+    };
+
     var end_title_edit = function (ev) {
         let title_bar = document.getElementById("title_bar");
         let title_edit_box = document.getElementById("title_edit_box");
@@ -963,6 +980,10 @@ class Parser
         title_edit_box.setAttribute("id", "title_edit_box");
         title_edit_box.value = schedule.title;
         title_edit_box.addEventListener("focusout", end_title_edit);
+        title_edit_box.addEventListener("keydown", (ev) => {
+            if (ev.keyCode === 13) end_title_edit();
+            if (ev.keyCode === 27) abort_title_edit();
+        });
 
         title_bar.replaceChild(title_edit_box, title);
 
