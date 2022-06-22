@@ -107,7 +107,7 @@ a {
 }
 
 .solving_status {
-    width: 350px;
+    max-width: 350px;
     padding: 16px 12px;
     margin: 0 auto;
     color: #aeb0be;
@@ -215,7 +215,7 @@ a {
     width: 129px;
     height: 13px;
     vertical-align: top;
-    display: inline flow-root;
+    display: inline-block;
     border-right: 1px solid #333445;
     border-bottom: 1px solid #333445;
 }
@@ -225,7 +225,7 @@ a {
     height: 14px;
     vertical-align: top;
     box-sizing: border-box;
-    display: inline flow-root;
+    display: inline-block;
     border-right: 1px solid #333445;
     border-bottom: 1px solid #333445;
 }
@@ -236,7 +236,7 @@ a {
     text-align: left;
     vertical-align: top;
     padding: 22px 0 22px 16px;
-    display: inline flow-root;
+    display: inline-block;
     border-right: 1px solid #333445;
     border-bottom: 1px solid #333445;
     font: normal normal 13px/15px "Work Sans", sans-serif;
@@ -247,7 +247,7 @@ a {
     height: 60px;
     vertical-align: top;
     box-sizing: border-box;
-    display: inline flow-root;
+    display: inline-block;
     border-right: 1px solid #333445;
     border-bottom: 1px solid #333445;
 }
