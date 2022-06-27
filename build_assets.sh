@@ -26,11 +26,20 @@ rm "web/tmp.png"
 echo "Building 'favicon.svg'"
 inkscape "assets/icon_small.svg" --export-plain-svg --export-filename=- | \
     sed 's/^[ ]\+/ /;s/<!--.*-->//g' | \
+    sed 's/ id="[a-z0-9-]\+"//g' | \
     tr -d '\n' | \
     sed 's/> </></g;s/ \/>/\/>/g' > "web/favicon.svg"
 echo "" >> "web/favicon.svg"
 
 # large icon
+
+echo "Building 'icon.svg'"
+inkscape "assets/icon_large.svg" --export-plain-svg --export-filename=- | \
+    sed 's/^[ ]\+/ /;s/<!--.*-->//g' | \
+    sed 's/ id="[a-z0-9-]\+"//g' | \
+    tr -d '\n' | \
+    sed 's/> </></g;s/ \/>/\/>/g' > "web/icon.svg"
+echo "" >> "web/icon.svg"
 
 echo "Building 'icon192.png'"
 inkscape "assets/icon_large.svg" --export-width=192 --export-filename="web/icon192.png"

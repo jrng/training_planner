@@ -8,7 +8,11 @@ const LANGUAGES = {
         solving_status:             "Solving status",
         backtracking:               "Backtracking",
         were_successfully_placed:   "time slots were sucessfully placed.",
-        schedule_title:             "Unnamed Schedule"
+        schedule_title:             "Unnamed Schedule",
+        open_headline:              "Open",
+        open_tagline:               "Load a schedule file from disk",
+        new_headline:               "Create",
+        new_tagline:                "Create a new schedule plan"
     },
     "de": {
         open_file:                  "Öffnen",
@@ -19,7 +23,11 @@ const LANGUAGES = {
         solving_status:             "Status",
         backtracking:               "Backtracking",
         were_successfully_placed:   "Turneinheiten wurden erfolgreich platziert.",
-        schedule_title:             "Unbenannter Trainingsplan"
+        schedule_title:             "Unbenannter Trainingsplan",
+        open_headline:              "Öffnen",
+        open_tagline:               "Lade eine Trainingsplandatei",
+        new_headline:               "Neu",
+        new_tagline:                "Erstelle einen neuen Trainingsplan"
     }
 };
 
@@ -753,7 +761,26 @@ class Parser
         }
     };
 
-    // TODO: storage filename and timestamp in local storage
+    var stored_schedule_count = function () {
+        if (has_local_storage())
+        {
+            let saved_state_str = localStorage.getItem("saved_state");
+
+            if (saved_state_str !== null)
+            {
+                let saved_state = JSON.parse(saved_state_str);
+
+                if (Array.isArray(saved_state))
+                {
+                    return saved_state.length;
+                }
+            }
+        }
+
+        return 0;
+    };
+
+    // TODO: store filename and timestamp in local storage
 
     var load_from_local_storage = function (index) {
         if (has_local_storage())
@@ -800,7 +827,7 @@ class Parser
 
                 if (Array.isArray(saved_state))
                 {
-                    if ((saved_state.length >= 0) && (schedule.storage_index < saved_state.length))
+                    if ((schedule.storage_index >= 0) && (schedule.storage_index < saved_state.length))
                     {
                         saved_state[schedule.storage_index] = { schedule: schedule, instances: instances };
                     }
@@ -988,6 +1015,116 @@ class Parser
         title_bar.replaceChild(title_edit_box, title);
 
         title_edit_box.focus();
+    };
+
+    var build_welcome_screen = function () {
+        let timeline = document.getElementById("timeline");
+
+        while (timeline.hasChildNodes()) timeline.removeChild(timeline.firstChild);
+
+        let logo = document.createElement("div");
+        logo.setAttribute("id", "logo");
+        timeline.appendChild(logo);
+
+        let name = document.createElement("div");
+        name.setAttribute("id", "name");
+        name.appendChild(document.createTextNode("Training Planner"));
+        timeline.appendChild(name);
+
+        let open_container = document.createElement("div");
+        open_container.classList.add("button_container");
+
+        if (has_local_storage())
+        {
+            let saved_state_str = localStorage.getItem("saved_state");
+
+            if (saved_state_str !== null)
+            {
+                let saved_state = JSON.parse(saved_state_str);
+
+                if (Array.isArray(saved_state) && (saved_state.length > 0))
+                {
+                    for (let i = 0; i < saved_state.length; i += 1)
+                    {
+                        let button = document.createElement("div");
+                        button.classList.add("action_button");
+                        button.addEventListener("click", (ev) => {
+                            load_from_local_storage(i);
+                        });
+
+                        let text_area = document.createElement("div");
+                        text_area.classList.add("action_text");
+
+                        let headline = document.createElement("div");
+                        headline.appendChild(document.createTextNode(saved_state[i].schedule.title));
+                        headline.classList.add("action_headline");
+
+                        text_area.appendChild(headline);
+
+                        let tagline = document.createElement("div");
+                        tagline.appendChild(document.createTextNode("unnamed_schedule.txt"));
+                        tagline.classList.add("action_tagline");
+
+                        text_area.appendChild(tagline);
+                        button.appendChild(text_area);
+
+                        let arrow = document.createElement("div");
+                        arrow.classList.add("arrow");
+
+                        button.appendChild(arrow);
+                        open_container.appendChild(button);
+                    }
+
+                    let separator = document.createElement("div");
+                    separator.classList.add("action_separator");
+
+                    open_container.appendChild(separator);
+                }
+            }
+        }
+
+        {
+            // open button
+
+            let open_button = document.createElement("div");
+            open_button.classList.add("action_button");
+            open_button.addEventListener("click", open_file);
+
+            let open_headline = document.createElement("div");
+            open_headline.appendChild(document.createTextNode(user_language.open_headline));
+            open_headline.classList.add("action_headline");
+
+            open_button.appendChild(open_headline);
+
+            let open_tagline = document.createElement("div");
+            open_tagline.appendChild(document.createTextNode(user_language.open_tagline));
+            open_tagline.classList.add("action_tagline");
+
+            open_button.appendChild(open_tagline);
+            open_container.appendChild(open_button);
+
+            /*
+            // new button
+
+            let create_button = document.createElement("div");
+            create_button.classList.add("action_button");
+
+            let create_headline = document.createElement("div");
+            create_headline.appendChild(document.createTextNode(user_language.new_headline));
+            create_headline.classList.add("action_headline");
+
+            create_button.appendChild(create_headline);
+
+            let create_tagline = document.createElement("div");
+            create_tagline.appendChild(document.createTextNode(user_language.new_tagline));
+            create_tagline.classList.add("action_tagline");
+
+            create_button.appendChild(create_tagline);
+            open_container.appendChild(create_button);
+            */
+        }
+
+        timeline.appendChild(open_container);
     };
 
     var build_solving_status = function () {
@@ -1789,7 +1926,7 @@ class Parser
         let browser_language = navigator.language.split("-")[0];
         set_language(browser_language);
 
-        load_from_local_storage(0);
+        build_welcome_screen();
 
         main_worker_thread = new Worker("main_worker_thread.js");
         main_worker_thread.addEventListener("message", handle_main_worker_thread_message);
