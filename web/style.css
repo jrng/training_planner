@@ -323,13 +323,9 @@ a {
 }
 
 @keyframes progress-anim {
-    0%     { box-shadow: #4e5164 -11px 6px 0 3px, #4e5164 -11px 6px 0 3px; }
-    16.67% { box-shadow: #4e5164 -11px 6px 0 3px, #4e5164  11px 6px 0 3px; }
-    33.33% { box-shadow: #4e5164 -11px 6px 0 3px, #4e5164 -11px 6px 0 3px; }
-    50%    { box-shadow: #4e5164  11px 6px 0 3px, #4e5164  11px 6px 0 3px; }
-    66.67% { box-shadow: #4e5164  11px 6px 0 3px, #4e5164 -11px 6px 0 3px; }
-    83.33% { box-shadow: #4e5164  11px 6px 0 3px, #4e5164  11px 6px 0 3px; }
-    100%   { box-shadow: #4e5164 -11px 6px 0 3px, #4e5164 -11px 6px 0 3px; }
+    0%   { box-shadow: #4e5164  11px 6px 0 3px, #4e5164 -11px 6px 0 3px; }
+    50%  { box-shadow: #52576d   0px 6px 0 4px, #4b4a5a   0px 6px 0 2px; }
+    100% { box-shadow: #4e5164 -11px 6px 0 3px, #4e5164  11px 6px 0 3px; }
 }
 
 .progress-anim:not(:required) {
@@ -342,6 +338,6 @@ a {
     background: transparent;
     border-radius: 100%;
     box-shadow: #4e5164 -11px 6px 0 3px, #4e5164 -11px 6px 0 3px;
-    animation: progress-anim 3.5s infinite ease-in-out;
+    animation: progress-anim .5s infinite linear;
     transform-origin: 50% 50%;
 }
