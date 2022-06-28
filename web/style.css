@@ -40,6 +40,7 @@ a {
 }
 
 .control_bar {
+    min-height: 26px;
     padding: 8px 10px;
     background: #272936;
 }
@@ -54,6 +55,7 @@ a {
 
 .control_bar a {
     padding: 6px 8px;
+    display: inline-block;
 }
 
 .ghost_button {
@@ -64,6 +66,7 @@ a {
     padding: 0;
     margin: 0 2px;
     padding: 6px 12px;
+    user-select: none;
     font: normal normal 12px/14px "Work Sans", sans-serif;
 }
 
@@ -87,6 +90,7 @@ a {
     padding: 0;
     margin: 0 2px;
     padding: 6px 12px;
+    user-select: none;
     font: normal normal 12px/14px "Work Sans", sans-serif;
 }
 
@@ -175,7 +179,7 @@ a {
 }
 
 .action_separator {
-    margin: 8px 8px;
+    margin: 8px;
     border-bottom: 1px solid #343545;
 }
 

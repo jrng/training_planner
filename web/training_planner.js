@@ -651,6 +651,10 @@ class Parser
 (function (document) {
     "use strict";
 
+    const SCREEN_HOMESCREEN     = Symbol("SCREEN_HOMESCREEN");
+    const SCREEN_SCHEDULE       = Symbol("SCREEN_SCHEDULE");
+    const SCREEN_SOLVING        = Symbol("SCREEN_SOLVING");
+
     const CANVAS_OFFSET_X       = 150;
     const CANVAS_OFFSET_Y       = 14;
 
@@ -671,6 +675,8 @@ class Parser
     var drag_time_slot = null;
     var drag_pointer_id = null;
     var drag_changed_time_slot = false;
+
+    var current_screen = null;
 
     var user_language_name = "en";
     var user_language = LANGUAGES["en"];
@@ -805,11 +811,7 @@ class Parser
 
                     schedule.storage_index = index;
 
-                    document.getElementById("save_file").removeAttribute("disabled");
-                    document.getElementById("export_pdf").removeAttribute("disabled");
-                    document.getElementById("start_solving").removeAttribute("disabled");
-
-                    build_schedule_timeline();
+                    switch_screen(SCREEN_SCHEDULE);
                     on_schedule_or_instances_changed();
                 }
             }
@@ -1017,7 +1019,7 @@ class Parser
         title_edit_box.focus();
     };
 
-    var build_welcome_screen = function () {
+    var build_homescreen = function () {
         let timeline = document.getElementById("timeline");
 
         while (timeline.hasChildNodes()) timeline.removeChild(timeline.firstChild);
@@ -1350,6 +1352,90 @@ class Parser
         timeline.appendChild(canvas);
 
         update_collisions();
+    };
+
+    var switch_screen = function (screen) {
+        if ((screen === current_screen) && (screen !== SCREEN_SCHEDULE))
+        {
+            return;
+        }
+
+        switch (current_screen)
+        {
+            case SCREEN_HOMESCREEN:
+            {
+                let top_bar = document.getElementById("top_bar");
+
+                let open_file_button = document.createElement("button");
+                open_file_button.appendChild(document.createTextNode(user_language.open_file));
+                open_file_button.setAttribute("id", "open_file");
+                open_file_button.classList.add("ghost_button", "left");
+                open_file_button.addEventListener("click", open_file);
+
+                let save_file_button = document.createElement("button");
+                save_file_button.appendChild(document.createTextNode(user_language.save_file));
+                save_file_button.setAttribute("id", "save_file");
+                save_file_button.classList.add("ghost_button", "left");
+                save_file_button.addEventListener("click", save_file);
+
+                let export_pdf_button = document.createElement("button");
+                export_pdf_button.appendChild(document.createTextNode(user_language.export_pdf));
+                export_pdf_button.setAttribute("id", "export_pdf");
+                export_pdf_button.classList.add("fill_button", "right");
+                export_pdf_button.addEventListener("click", export_pdf);
+
+                top_bar.appendChild(open_file_button);
+                top_bar.appendChild(save_file_button);
+                top_bar.appendChild(export_pdf_button);
+
+                let bottom_bar = document.getElementById("bottom_bar");
+
+                let solve_button = document.createElement("button");
+                solve_button.appendChild(document.createTextNode(user_language.solve));
+                solve_button.setAttribute("id", "start_solving");
+                solve_button.classList.add("fill_button", "right");
+                solve_button.addEventListener("click", start_solving);
+
+                bottom_bar.appendChild(solve_button);
+            } break;
+
+            case SCREEN_SCHEDULE:
+            {
+            } break;
+
+            case SCREEN_SOLVING:
+            {
+                document.getElementById("open_file").removeAttribute("disabled");
+                document.getElementById("save_file").removeAttribute("disabled");
+                document.getElementById("export_pdf").removeAttribute("disabled");
+                document.getElementById("start_solving").removeAttribute("disabled");
+            } break;
+        }
+
+        current_screen = screen;
+
+        switch (current_screen)
+        {
+            case SCREEN_HOMESCREEN:
+            {
+                build_homescreen();
+            } break;
+
+            case SCREEN_SCHEDULE:
+            {
+                build_schedule_timeline();
+            } break;
+
+            case SCREEN_SOLVING:
+            {
+                document.getElementById("open_file").setAttribute("disabled", "");
+                document.getElementById("save_file").setAttribute("disabled", "");
+                document.getElementById("export_pdf").setAttribute("disabled", "");
+                document.getElementById("start_solving").setAttribute("disabled", "");
+
+                build_solving_status();
+            } break;
+        }
     };
 
     var cut_rounded_rect = function(builder, x0, y0, x1, y1, radius, page_width, page_height) {
@@ -1752,11 +1838,7 @@ class Parser
             schedule = new_schedule;
             instances = run_quick_check(schedule);
 
-            document.getElementById("save_file").removeAttribute("disabled");
-            document.getElementById("export_pdf").removeAttribute("disabled");
-            document.getElementById("start_solving").removeAttribute("disabled");
-
-            build_schedule_timeline();
+            switch_screen(SCREEN_SCHEDULE);
             on_schedule_or_instances_changed();
         }
     };
@@ -1797,11 +1879,6 @@ class Parser
     var cancel_solving = function () {
         main_worker_thread.postMessage({ cmd: "cancel_solving" });
 
-        document.getElementById("open_file").removeAttribute("disabled");
-        document.getElementById("save_file").removeAttribute("disabled");
-        document.getElementById("export_pdf").removeAttribute("disabled");
-        document.getElementById("start_solving").removeAttribute("disabled");
-
         for (let i = 0; i < instances.length; i += 1)
         {
             for (let j = 0; j < best_instances.length; j += 1)
@@ -1816,18 +1893,13 @@ class Parser
             }
         }
 
-        build_schedule_timeline();
+        switch_screen(SCREEN_SCHEDULE);
         on_instances_changed();
     };
 
     var start_solving = function () {
         if (schedule)
         {
-            document.getElementById("open_file").setAttribute("disabled", "");
-            document.getElementById("save_file").setAttribute("disabled", "");
-            document.getElementById("export_pdf").setAttribute("disabled", "");
-            document.getElementById("start_solving").setAttribute("disabled", "");
-
             best_instances = [];
 
             for (let i = 0; i < instances.length; i += 1)
@@ -1835,7 +1907,7 @@ class Parser
                 best_instances.push(Object.assign({}, instances[i]));
             }
 
-            build_solving_status();
+            switch_screen(SCREEN_SOLVING);
             main_worker_thread.postMessage({ cmd: "start_solving", schedule: schedule, instances: best_instances });
         }
     };
@@ -1864,24 +1936,13 @@ class Parser
                     }
                 }
 
-                document.getElementById("open_file").removeAttribute("disabled");
-                document.getElementById("save_file").removeAttribute("disabled");
-                document.getElementById("export_pdf").removeAttribute("disabled");
-                document.getElementById("start_solving").removeAttribute("disabled");
-
-                build_schedule_timeline();
+                switch_screen(SCREEN_SCHEDULE);
                 on_instances_changed();
             } break;
 
             case "no_solution":
             {
-                document.getElementById("open_file").removeAttribute("disabled");
-                document.getElementById("save_file").removeAttribute("disabled");
-                document.getElementById("export_pdf").removeAttribute("disabled");
-                document.getElementById("start_solving").removeAttribute("disabled");
-
-                build_schedule_timeline();
-
+                switch_screen(SCREEN_SCHEDULE);
                 // TODO: show message, that there is no solution
             } break;
 
@@ -1904,11 +1965,6 @@ class Parser
             {
                 user_language_name = lang;
                 user_language = LANGUAGES[lang];
-
-                change_element_text("open_file", user_language.open_file);
-                change_element_text("save_file", user_language.save_file);
-                change_element_text("export_pdf", user_language.export_pdf);
-                change_element_text("start_solving", user_language.solve);
             }
         }
     };
@@ -1918,15 +1974,10 @@ class Parser
         file_picker.type = "file";
         file_picker.addEventListener("change", on_file_selected);
 
-        document.getElementById("open_file").addEventListener("click", open_file);
-        document.getElementById("save_file").addEventListener("click", save_file);
-        document.getElementById("export_pdf").addEventListener("click", export_pdf);
-        document.getElementById("start_solving").addEventListener("click", start_solving);
-
         let browser_language = navigator.language.split("-")[0];
         set_language(browser_language);
 
-        build_welcome_screen();
+        switch_screen(SCREEN_HOMESCREEN);
 
         main_worker_thread = new Worker("main_worker_thread.js");
         main_worker_thread.addEventListener("message", handle_main_worker_thread_message);
