@@ -1146,6 +1146,11 @@ class Parser
 
         container.appendChild(backtracking);
 
+        let separator = document.createElement("div");
+        separator.classList.add("action_separator");
+
+        container.appendChild(separator);
+
         let backtracking_state = document.createElement("p");
 
         number_of_placements = document.createElement("span");
