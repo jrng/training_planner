@@ -351,6 +351,10 @@ a {
     left: 101px;
 }
 
+.timeslot.selected {
+    background: #d3d6ec;
+}
+
 .timeslot.collision {
     border-color: #d64343;
 }
@@ -385,6 +389,22 @@ a {
     text-align: center;
     padding: 0 0 2px 0;
     font: normal normal 11px/13px "Work Sans", sans-serif;
+}
+
+.timeslot.selected .fixed {
+    color: #717383;
+}
+
+.timeslot.selected .name {
+    color: #333445;
+}
+
+.timeslot.selected .soloname {
+    color: #333445;
+}
+
+.timeslot.selected .label {
+    color: #717383;
 }
 
 .timeslot .equipment {

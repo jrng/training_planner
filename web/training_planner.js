@@ -669,12 +669,22 @@ class Parser
 
     const PDF_FONT_FACTOR       = 0.75;
 
+    const SELECT_TIMEOUT        = 140;
+
+    var select_target = null;
+    var select_instance = null;
+    var select_time_slot = null;
+
     var drag_offset = 0;
     var drag_target = null;
     var drag_instance = null;
     var drag_time_slot = null;
     var drag_pointer_id = null;
     var drag_changed_time_slot = false;
+
+    var time_helper_visible = false;
+
+    var select_timeout = null;
 
     var current_screen = null;
 
@@ -703,6 +713,7 @@ class Parser
 
     var hide_time_helper = function () {
         time_helper.removeAttribute("style");
+        time_helper_visible = false;
     };
 
     var show_time_helper = function (time_slot) {
@@ -716,6 +727,7 @@ class Parser
         time_helper.style.top = time_helper_offset_y + "px";
         time_helper.style.left = time_helper_offset_x + "px";
         time_helper.style.width = time_helper_width + "px";
+        time_helper_visible = true;
     };
 
     var update_collisions = function () {
@@ -867,6 +879,16 @@ class Parser
         on_schedule_or_instances_changed();
     };
 
+    var on_select_timeout = function () {
+        clearTimeout(select_timeout)
+        select_timeout = null;
+
+        if (!drag_time_slot.is_fixed)
+        {
+            show_time_helper(drag_time_slot);
+        }
+    };
+
     var pointer_move = function (ev) {
         if (ev.pointerId === drag_pointer_id)
         {
@@ -885,6 +907,17 @@ class Parser
 
             if (time !== drag_instance.start_time)
             {
+                if (select_timeout !== null)
+                {
+                    clearTimeout(select_timeout)
+                    select_timeout = null;
+
+                    if (!drag_time_slot.is_fixed)
+                    {
+                        show_time_helper(drag_time_slot);
+                    }
+                }
+
                 drag_instance.start_time = time;
                 drag_instance.end_time = drag_instance.start_time + drag_time_slot.duration;
 
@@ -904,19 +937,38 @@ class Parser
             drag_target.removeEventListener("pointerup", pointer_end);
             drag_target.removeEventListener("pointercancel", pointer_end);
 
+            if (select_timeout === null)
+            {
+                hide_time_helper();
+
+                if (drag_changed_time_slot)
+                {
+                    on_instances_changed();
+                }
+            }
+            else
+            {
+                clearTimeout(select_timeout)
+                select_timeout = null;
+
+                if (select_target !== null)
+                {
+                    select_target.classList.remove("selected");
+                }
+
+                select_target = drag_target;
+                select_instance = drag_instance;
+                select_time_slot = drag_time_slot;
+
+                select_target.classList.add("selected");
+            }
+
+            document.body.style.cursor = "default";
+
             drag_target = null;
             drag_instance = null;
             drag_time_slot = null;
             drag_pointer_id = null;
-
-            hide_time_helper();
-
-            document.body.style.cursor = "default";
-
-            if (drag_changed_time_slot)
-            {
-                on_instances_changed();
-            }
         }
     };
 
@@ -932,6 +984,7 @@ class Parser
             (instance_index < instances.length))
         {
             ev.preventDefault();
+            ev.stopPropagation();
 
             drag_target = elem;
             drag_instance = instances[instance_index];
@@ -939,10 +992,7 @@ class Parser
             drag_pointer_id = ev.pointerId;
             drag_changed_time_slot = false;
 
-            if (!drag_time_slot.is_fixed)
-            {
-                show_time_helper(drag_time_slot);
-            }
+            select_timeout = setTimeout(on_select_timeout, SELECT_TIMEOUT);
 
             let canvas_bounding_rect = canvas.getBoundingClientRect();
 
@@ -955,6 +1005,19 @@ class Parser
             drag_target.addEventListener("pointercancel", pointer_end);
 
             document.body.style.cursor = "move";
+        }
+    };
+
+    var pointer_on_schedule_box = function (ev) {
+        if (!ev.isPrimary) return;
+
+        if (select_target !== null)
+        {
+            select_target.classList.remove("selected");
+
+            select_target = null;
+            select_instance = null;
+            select_time_slot = null;
         }
     };
 
@@ -1978,6 +2041,8 @@ class Parser
         file_picker = document.createElement("input");
         file_picker.type = "file";
         file_picker.addEventListener("change", on_file_selected);
+
+        document.getElementById("schedule_box").addEventListener("pointerdown", pointer_on_schedule_box);
 
         let browser_language = navigator.language.split("-")[0];
         set_language(browser_language);
