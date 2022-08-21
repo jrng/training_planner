@@ -1679,6 +1679,15 @@ class Parser
 
                     cut_rounded_rect(stream, x + 1, y, x + w - 1, y + row_height, 2, width, height);
                 }
+                else if (!time_slot.is_fixed && (time_slot.gymnast_id === trainer_id))
+                {
+                    let x = time_slots_x_min + (instance.start_time - schedule.min_time) * units_per_minute;
+                    let y = time_slots_y_max - (row_index * (row_height + row_distance) + 0.5 * row_distance);
+
+                    let w = (instance.end_time - instance.start_time) * units_per_minute;
+
+                    cut_rounded_rect(stream, x + 1, y, x + w - 1, y + row_height, 2, width, height);
+                }
             }
         }
 
@@ -1813,6 +1822,18 @@ class Parser
                                       (x + 0.5 * (w - gymnastic_equipment_width)) + " " + (y + 0.12 * row_height) + " Td (" +
                                       gymnastic_equipment_name + ")Tj ET\n");
                     }
+                }
+                else if (!time_slot.is_fixed && (time_slot.gymnast_id == trainer_id))
+                {
+                    let x = time_slots_x_min + (instance.start_time - schedule.min_time) * units_per_minute;
+                    let y = time_slots_y_max - (row_index * (row_height + row_distance) + 0.5 * row_distance);
+
+                    let w = (instance.end_time - instance.start_time) * units_per_minute;
+
+                    stroke_rounded_rect(stream, x + 1, y, x + w - 1, y + row_height, 0.5, 2);
+
+                    stream.append("0.5 w 0.6 0.6 0.6 RG");
+                    stream.append(" " + (x + 2) + " " + (y + 1) + " m " + (x + w - 2) + " " + (y + row_height - 1) + " l S");
                 }
             }
         }
