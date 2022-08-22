@@ -1115,6 +1115,7 @@ class Parser
                         button.classList.add("action_button");
                         button.addEventListener("click", (ev) => {
                             load_from_local_storage(i);
+                            history.pushState({ screen: SCREEN_SCHEDULE.toString(), storage_index: i }, null, null);
                         });
 
                         let text_area = document.createElement("div");
@@ -1480,12 +1481,29 @@ class Parser
             } break;
         }
 
-        current_screen = screen;
-
-        switch (current_screen)
+        switch (screen)
         {
             case SCREEN_HOMESCREEN:
             {
+                if (current_screen !== null)
+                {
+                    let top_bar = document.getElementById("top_bar");
+
+                    let open_file_button = document.getElementById("open_file");
+                    let save_file_button = document.getElementById("save_file");
+                    let export_pdf_button = document.getElementById("export_pdf");
+
+                    top_bar.removeChild(open_file_button);
+                    top_bar.removeChild(save_file_button);
+                    top_bar.removeChild(export_pdf_button);
+
+                    let bottom_bar = document.getElementById("bottom_bar");
+
+                    let solve_button = document.getElementById("start_solving");
+
+                    bottom_bar.removeChild(solve_button);
+                }
+
                 build_homescreen();
             } break;
 
@@ -1504,6 +1522,8 @@ class Parser
                 build_solving_status();
             } break;
         }
+
+        current_screen = screen;
     };
 
     var cut_rounded_rect = function(builder, x0, y0, x1, y1, radius, page_width, page_height) {
@@ -1929,6 +1949,7 @@ class Parser
 
             switch_screen(SCREEN_SCHEDULE);
             on_schedule_or_instances_changed();
+            history.pushState({ screen: SCREEN_SCHEDULE.toString(), storage_index: schedule.storage_index }, null, null);
         }
     };
 
@@ -2058,10 +2079,28 @@ class Parser
         }
     };
 
+    var on_history_pop = function (e) {
+        if (current_screen === SCREEN_SOLVING)
+        {
+            cancel_solving();
+            history.pushState({ screen: SCREEN_SCHEDULE.toString(), storage_index: schedule.storage_index }, null, null);
+        }
+        else if (e.state === null)
+        {
+            switch_screen(SCREEN_HOMESCREEN);
+        }
+        else if (e.state.screen === SCREEN_SCHEDULE.toString())
+        {
+            load_from_local_storage(e.state.storage_index);
+        }
+    };
+
     var init = function () {
         file_picker = document.createElement("input");
         file_picker.type = "file";
         file_picker.addEventListener("change", on_file_selected);
+
+        window.addEventListener("popstate", on_history_pop);
 
         document.getElementById("schedule_box").addEventListener("pointerdown", pointer_on_schedule_box);
 
@@ -2069,6 +2108,11 @@ class Parser
         set_language(browser_language);
 
         switch_screen(SCREEN_HOMESCREEN);
+
+        if ((history.state !== null) && (history.state.screen === SCREEN_SCHEDULE.toString()))
+        {
+            load_from_local_storage(history.state.storage_index);
+        }
 
         main_worker_thread = new Worker("main_worker_thread.js");
         main_worker_thread.addEventListener("message", handle_main_worker_thread_message);
