@@ -1714,11 +1714,21 @@ class Parser
         for (let step = start_5_minute; step <= end_5_minute; step += 1)
         {
             let time = step * 5;
+            let minute = time % 60;
 
             let x = time_slots_x_min + ((step - start_5_minute) * 5 * units_per_minute);
             let y1 = Math.max(time_slots_y_min, time_slots_y_max - ((schedule.trainers.length * (row_height + row_distance)) + row_distance));
+
             stream.append("0.5 w 0 J 0.6 0.6 0.6 RG " + x + " " + time_slots_y_max + " m " + x + " " + y1 + " l S\n");
-            stream.append("0.4 0.4 0.4 rg BT /F1 7 Tf " + (x - 9) + " " + (time_slots_y_max + 4) + " Td (" + TimeSlot.time_to_string(time) + ")Tj ET\n");
+
+            if (minute === 0)
+            {
+                stream.append("0.1 0.1 0.1 rg BT /F1 9 Tf " + (x - 11) + " " + (time_slots_y_max + 4) + " Td (" + TimeSlot.time_to_string(time) + ")Tj ET\n");
+            }
+            else
+            {
+                stream.append("0.4 0.4 0.4 rg BT /F1 7 Tf " + (x - 9) + " " + (time_slots_y_max + 4) + " Td (" + TimeSlot.time_to_string(time) + ")Tj ET\n");
+            }
         }
 
         stream.append("Q\n");
@@ -1811,7 +1821,7 @@ class Parser
 
                         let color_index = gymnastic_equipment_id % GYMNASTIC_EQUIPMENT_COLORS.length;
 
-                        let fg = GYMNASTIC_EQUIPMENT_COLORS[color_index].foreground;
+                        let fg = [ 1, 1, 1 ];
                         let bg = GYMNASTIC_EQUIPMENT_COLORS[color_index].background;
 
                         {
