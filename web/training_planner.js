@@ -825,9 +825,13 @@ class Parser
 
                     switch_screen(SCREEN_SCHEDULE);
                     on_schedule_or_instances_changed();
+
+                    return true;
                 }
             }
         }
+
+        return false;
     };
 
     var store_to_local_storage = function () {
@@ -1115,7 +1119,7 @@ class Parser
                         button.classList.add("action_button");
                         button.addEventListener("click", (ev) => {
                             load_from_local_storage(i);
-                            history.pushState({ screen: SCREEN_SCHEDULE.toString(), storage_index: i }, null, null);
+                            history.pushState({ screen: SCREEN_SCHEDULE.toString(), storage_index: i }, null, "?id=" + i);
                         });
 
                         let text_area = document.createElement("div");
@@ -1959,7 +1963,7 @@ class Parser
 
             switch_screen(SCREEN_SCHEDULE);
             on_schedule_or_instances_changed();
-            history.pushState({ screen: SCREEN_SCHEDULE.toString(), storage_index: schedule.storage_index }, null, null);
+            history.pushState({ screen: SCREEN_SCHEDULE.toString(), storage_index: schedule.storage_index }, null, "?id=" + schedule.storage_index);
         }
     };
 
@@ -2093,15 +2097,29 @@ class Parser
         if (current_screen === SCREEN_SOLVING)
         {
             cancel_solving();
-            history.pushState({ screen: SCREEN_SCHEDULE.toString(), storage_index: schedule.storage_index }, null, null);
+            history.pushState({ screen: SCREEN_SCHEDULE.toString(), storage_index: schedule.storage_index }, null, "?id=" + schedule.storage_index);
         }
-        else if (e.state === null)
+        else
         {
-            switch_screen(SCREEN_HOMESCREEN);
-        }
-        else if (e.state.screen === SCREEN_SCHEDULE.toString())
-        {
-            load_from_local_storage(e.state.storage_index);
+            let get_params = new URLSearchParams(document.location.search);
+            let id_str = get_params.get("id");
+
+            let loaded = false;
+
+            if (id_str !== null)
+            {
+                let storage_index = Number(id_str);
+
+                if (storage_index >= 0)
+                {
+                    loaded = load_from_local_storage(storage_index);
+                }
+            }
+
+            if (!loaded)
+            {
+                switch_screen(SCREEN_HOMESCREEN);
+            }
         }
     };
 
@@ -2122,6 +2140,21 @@ class Parser
         if ((history.state !== null) && (history.state.screen === SCREEN_SCHEDULE.toString()))
         {
             load_from_local_storage(history.state.storage_index);
+        }
+        else
+        {
+            let get_params = new URLSearchParams(document.location.search);
+            let id_str = get_params.get("id");
+
+            if (id_str !== null)
+            {
+                let storage_index = Number(id_str);
+
+                if (storage_index >= 0)
+                {
+                    load_from_local_storage(storage_index);
+                }
+            }
         }
 
         main_worker_thread = new Worker("main_worker_thread.js");
