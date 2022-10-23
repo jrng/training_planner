@@ -154,7 +154,7 @@ class PDFExporter
 
     finalize()
     {
-        let startxref = this.index;
+        let startxref = this.string_builder.index;
 
         this.append("xref\n");
         this.append("0 " + this.next_object_id + "\n");
@@ -1872,13 +1872,16 @@ class Parser
             }
         }
 
-        let content_id = pdf.create_object();
+        if (stream.index > 0)
+        {
+            let content_id = pdf.create_object();
 
-        pdf.append(content_id + " 0 obj\n");
-        pdf.append("<< /Length " + stream.index + " >>\n");
-        pdf.append("stream\n");
-        pdf.append_string_builder(stream);
-        pdf.append("endstream\nendobj\n");
+            pdf.append(content_id + " 0 obj\n");
+            pdf.append("<< /Length " + (stream.index - 1) + " >>\n");
+            pdf.append("stream\n");
+            pdf.append_string_builder(stream);
+            pdf.append("endstream\nendobj\n");
+        }
 
         return pdf.finalize();
     };
