@@ -1867,7 +1867,7 @@ class Parser
                     stroke_rounded_rect(stream, x + 1, y, x + w - 1, y + row_height, 0.5, 2);
 
                     stream.append("0.5 w 0.6 0.6 0.6 RG");
-                    stream.append(" " + (x + 2) + " " + (y + 1) + " m " + (x + w - 2) + " " + (y + row_height - 1) + " l S");
+                    stream.append(" " + (x + 2) + " " + (y + 1) + " m " + (x + w - 2) + " " + (y + row_height - 1) + " l S\n");
                 }
             }
         }
