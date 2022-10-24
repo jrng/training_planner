@@ -366,22 +366,31 @@ a {
 .timeslot .fixed {
     color: #717383;
     text-align: center;
-    padding: 17px 0 18px 0;
+    padding: 17px 4px 18px;
     font: normal normal 11px/13px "Work Sans", sans-serif;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .timeslot .name {
     color: #aeb0be;
     text-align: center;
-    padding: 2px 0 0 0;
+    padding: 2px 4px 0;
     font: normal normal 11px/13px "Work Sans", sans-serif;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .timeslot .soloname {
     color: #aeb0be;
     text-align: center;
-    padding: 9px 0 8px 0;
+    padding: 9px 4px 8px;
     font: normal normal 11px/13px "Work Sans", sans-serif;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .timeslot .label {
