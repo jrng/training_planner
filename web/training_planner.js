@@ -677,6 +677,7 @@ class Parser
 
     var drag_offset = 0;
     var drag_target = null;
+    var drag_shadow = null;
     var drag_instance = null;
     var drag_time_slot = null;
     var drag_pointer_id = null;
@@ -928,6 +929,11 @@ class Parser
                 let offset_x = ((time - schedule.min_time) * PIXEL_PER_MINUTE) + CANVAS_OFFSET_X + TIME_SLOT_PAD_LEFT;
                 drag_target.style.left = offset_x + "px";
 
+                if (drag_shadow)
+                {
+                    drag_shadow.style.left = offset_x + "px";
+                }
+
                 update_collisions();
                 drag_changed_time_slot = true;
             }
@@ -970,6 +976,7 @@ class Parser
             document.body.style.cursor = "default";
 
             drag_target = null;
+            drag_shadow = null;
             drag_instance = null;
             drag_time_slot = null;
             drag_pointer_id = null;
@@ -993,6 +1000,7 @@ class Parser
             drag_target = elem;
             drag_instance = instances[instance_index];
             drag_time_slot = schedule.time_slots[drag_instance.slot_id];
+            drag_shadow = document.getElementById("shadow-" + drag_instance.slot_id);
             drag_pointer_id = ev.pointerId;
             drag_changed_time_slot = false;
 
@@ -1342,6 +1350,9 @@ class Parser
 
         canvas.appendChild(time_helper);
 
+        let pivot = document.createElement("div");
+        canvas.appendChild(pivot);
+
         for (let trainer_index = 0; trainer_index < schedule.trainers.length; trainer_index += 1)
         {
             let trainer_id = schedule.trainers[trainer_index];
@@ -1418,6 +1429,21 @@ class Parser
                     timeslot.ondragstart = () => false;
 
                     canvas.appendChild(timeslot);
+                }
+                else if (!time_slot.is_fixed && (time_slot.gymnast_id === trainer_id))
+                {
+                    let offset_x = (instance.start_time - schedule.min_time) * PIXEL_PER_MINUTE + CANVAS_OFFSET_X + TIME_SLOT_PAD_LEFT;
+                    let time_slot_width = ((instance.end_time - instance.start_time) * PIXEL_PER_MINUTE) - (TIME_SLOT_PAD_LEFT + TIME_SLOT_PAD_RIGHT);
+
+                    let timeslot = document.createElement("div");
+                    timeslot.setAttribute("id", "shadow-" + instance.slot_id);
+                    timeslot.classList.add("shadow");
+
+                    timeslot.style.left  = offset_x + "px";
+                    timeslot.style.top   = offset_y + "px";
+                    timeslot.style.width = time_slot_width + "px";
+
+                    canvas.insertBefore(timeslot, pivot);
                 }
             }
         }
@@ -1857,7 +1883,7 @@ class Parser
                                       gymnastic_equipment_name + ")Tj ET\n");
                     }
                 }
-                else if (!time_slot.is_fixed && (time_slot.gymnast_id == trainer_id))
+                else if (!time_slot.is_fixed && (time_slot.gymnast_id === trainer_id))
                 {
                     let x = time_slots_x_min + (instance.start_time - schedule.min_time) * units_per_minute;
                     let y = time_slots_y_max - (row_index * (row_height + row_distance) + 0.5 * row_distance);

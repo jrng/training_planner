@@ -427,6 +427,19 @@ a {
     white-space: nowrap;
 }
 
+.shadow {
+    width: 80px;
+    height: 49px;
+    background: #13141e;
+    border: 1px solid #333445;
+    border-radius: 4px;
+    position: absolute;
+    touch-action: none;
+    user-select: none;
+    top: 17px;
+    left: 101px;
+}
+
 @keyframes progress-anim {
     0%   { box-shadow: #4e5164  11px 6px 0 3px, #4e5164 -11px 6px 0 3px; }
     50%  { box-shadow: #52576d   0px 6px 0 4px, #4b4a5a   0px 6px 0 2px; }
