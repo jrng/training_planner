@@ -1125,6 +1125,22 @@ class Parser
 
                 if (Array.isArray(saved_state) && (saved_state.length > 0))
                 {
+                    for (let i = 1; i < saved_state.length; i += 1)
+                    {
+                        for (let j = 0; j < (saved_state.length - i); j += 1)
+                        {
+                            let plan_a = saved_state[j];
+                            let plan_b = saved_state[j + 1];
+
+                            if ((plan_b.modify !== undefined) && ((plan_a.modify === undefined) ||
+                                                                  (new Date(plan_a.modify) < new Date(plan_b.modify))))
+                            {
+                                saved_state[j] = plan_b;
+                                saved_state[j + 1] = plan_a;
+                            }
+                        }
+                    }
+
                     for (let i = 0; i < saved_state.length; i += 1)
                     {
                         let button = document.createElement("div");
