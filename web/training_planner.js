@@ -12,7 +12,8 @@ const LANGUAGES = {
         open_headline:              "Open",
         open_tagline:               "Load a schedule file from disk",
         new_headline:               "Create",
-        new_tagline:                "Create a new schedule plan"
+        new_tagline:                "Create a new schedule plan",
+        last_change_date:           "Last change"
     },
     "de": {
         open_file:                  "Öffnen",
@@ -27,7 +28,8 @@ const LANGUAGES = {
         open_headline:              "Öffnen",
         open_tagline:               "Lade eine Trainingsplandatei",
         new_headline:               "Neu",
-        new_tagline:                "Erstelle einen neuen Trainingsplan"
+        new_tagline:                "Erstelle einen neuen Trainingsplan",
+        last_change_date:           "Letzte Änderung"
     }
 };
 
@@ -701,6 +703,8 @@ class Parser
 
     var base_filename = "unnamed_plan";
 
+    var modify_timestamp = null;
+
     var schedule = null;
     var instances = [];
     var best_instances = [];
@@ -825,7 +829,6 @@ class Parser
                     schedule.storage_index = index;
 
                     switch_screen(SCREEN_SCHEDULE);
-                    on_schedule_or_instances_changed();
 
                     return true;
                 }
@@ -848,18 +851,18 @@ class Parser
                 {
                     if ((schedule.storage_index >= 0) && (schedule.storage_index < saved_state.length))
                     {
-                        saved_state[schedule.storage_index] = { schedule: schedule, instances: instances };
+                        saved_state[schedule.storage_index] = { schedule: schedule, instances: instances, modify: modify_timestamp };
                     }
                     else
                     {
                         schedule.storage_index = saved_state.length;
-                        saved_state.push({ schedule: schedule, instances: instances });
+                        saved_state.push({ schedule: schedule, instances: instances, modify: modify_timestamp });
                     }
                 }
                 else
                 {
                     schedule.storage_index = 0;
-                    saved_state = [{ schedule: schedule, instances: instances }];
+                    saved_state = [{ schedule: schedule, instances: instances, modify: modify_timestamp }];
                 }
 
                 localStorage.setItem("saved_state", JSON.stringify(saved_state));
@@ -867,7 +870,7 @@ class Parser
             else
             {
                 schedule.storage_index = 0;
-                let saved_state = [{ schedule: schedule, instances: instances }];
+                let saved_state = [{ schedule: schedule, instances: instances, modify: modify_timestamp }];
                 localStorage.setItem("saved_state", JSON.stringify(saved_state));
             }
         }
@@ -876,6 +879,7 @@ class Parser
     var on_schedule_or_instances_changed = function () {
         if (schedule !== null)
         {
+            modify_timestamp = new Date();
             store_to_local_storage();
         }
     };
@@ -1139,8 +1143,18 @@ class Parser
 
                         text_area.appendChild(headline);
 
+                        let modify_str = "unnamed_schedule.txt";
+
+                        if (saved_state[i].modify !== undefined)
+                        {
+                            let date = new Date(saved_state[i].modify);
+                            let date_str = date.toLocaleDateString(user_language_name, { year: "numeric", month: "long", day: "numeric" });
+                            let time_str = date.toLocaleTimeString(user_language_name, { hour: "numeric", minute: "numeric" });
+                            modify_str = user_language.last_change_date + ": " + date_str + " - " + time_str;
+                        }
+
                         let tagline = document.createElement("div");
-                        tagline.appendChild(document.createTextNode("unnamed_schedule.txt"));
+                        tagline.appendChild(document.createTextNode(modify_str));
                         tagline.classList.add("action_tagline");
 
                         text_area.appendChild(tagline);
