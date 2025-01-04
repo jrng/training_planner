@@ -2144,7 +2144,7 @@ class Parser
     var set_language = function (lang) {
         if ((typeof(lang) === "string") && (lang !== user_language_name))
         {
-            if ((lang === "en") || (lang === "de"))
+            if (LANGUAGES.hasOwnProperty(lang))
             {
                 user_language_name = lang;
                 user_language = LANGUAGES[lang];
